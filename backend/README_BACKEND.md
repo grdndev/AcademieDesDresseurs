@@ -13,7 +13,7 @@ npm install
 Créer un fichier `.env` à la racine du backend (déjà créé) :
 
 ```env
-PORT=3000
+PORT=5001
 MONGO_URI=mongodb://127.0.0.1:27017/express_api_db
 JWT_SECRET=your_super_secure_jwt_secret_change_in_production_2026
 ```
@@ -118,12 +118,12 @@ Authorization: Bearer <token>
 
 ### Health Check
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:5001/health
 ```
 
 ### Créer un compte
 ```bash
-curl -X POST http://localhost:3000/api/users/register \
+curl -X POST http://localhost:5001/api/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -163,7 +163,7 @@ MongoDB avec Mongoose ODM.
 
 4. **Tester**
    ```bash
-   curl http://localhost:3000/health
+   curl http://localhost:5001/health
    # Réponse : {"status":"OK","timestamp":"..."}
    ```
 

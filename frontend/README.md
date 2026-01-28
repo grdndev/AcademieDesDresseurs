@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Académie des Dresseurs - Frontend
 
-## Getting Started
+L'interface utilisateur de l'Académie des Dresseurs, conçue pour offrir une expérience premium aux joueurs de TCG.
 
-First, run the development server:
+## 🛠️ Stack Technique
 
+- **Framework** : [Next.js 15](https://nextjs.org/) (App Router)
+- **Styling** : [Tailwind CSS v4](https://tailwindcss.com/)
+- **Icônes** : [Lucide React](https://lucide.dev/)
+- **Typographie** : Outfit (Configurée via CSS variables)
+
+## 🚀 Démarrage
+
+1. **Installer les dépendances** :
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Lancer le serveur de développement** :
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Accéder à l'application** :
+Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Structure du Projet
 
-## Learn More
+- `app/` : Contient toutes les pages et la logique du App Router.
+  - `components/` : Composants réutilisables (Navbar, Footer, etc.).
+  - `apprendre/` : Hub de formation.
+  - `progresser/` : Hub de coaching.
+  - `sequiper/` : Boutique et Deck-to-Stock Builder.
+  - `professeur/` : Recrutement.
+  - `login/` & `register/` : Authentification.
+- `public/` : Assets statiques (images, favicons).
 
-To learn more about Next.js, take a look at the following resources:
+## 🎨 Design System
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Le design repose sur les variables CSS définies dans `globals.css` :
+- `--primary` : Bleu Académie (#004A99)
+- `--accent` : Jaune Accent (#E1BC2E)
+- `--font-outfit` : Police principale pour une lisibilité optimale.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚧 En cours de développement
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Intégration complète du panier d'achat.
+- Logique du Deck-to-Stock Builder (import de lists).
+- Connexion aux APIs backend pour la gestion utilisateur.
