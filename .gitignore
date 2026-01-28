@@ -1,0 +1,19 @@
+# Logiciels
+.DS_Store
+*.log
+node_modules/
+.next/
+dist/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# npm
+package-lock.json
+
+# IDE
+.vscode/
+.idea/

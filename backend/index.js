@@ -57,14 +57,16 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+    console.log('✅ Database connected successfully');
+  } catch (dbError) {
+    console.error('⚠️ Database connection failed:', dbError.message);
+    console.log('🚀 Starting server in standalone mode (some features will be unavailable)...');
   }
+
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
 };
 
 startServer();
