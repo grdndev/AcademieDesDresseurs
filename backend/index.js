@@ -13,7 +13,14 @@ const paymentRoutes = require('./routes/payment');
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use((req, res, next) => {
+  // STRIPE : exclusion pour obtenir le rawbody
+  if (req.originalUrl === '/api/payment/webhook') {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true }));
 
 // CORS (à configurer selon vos besoins)

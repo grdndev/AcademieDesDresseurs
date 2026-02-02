@@ -4,10 +4,9 @@ const orderSchema = new mongoose.Schema({
   // Numéro de commande unique (Format: ADD-YYMM-XXXX)
   orderNumber: {
     type: String,
-    unique: true,
-    required: true
+    unique: true
   },
-  
+
   // Client (optionnel pour guest checkout)
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -17,7 +16,7 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
+
   // Informations client
   customerInfo: {
     email: {
@@ -41,7 +40,7 @@ const orderSchema = new mongoose.Schema({
       trim: true
     }
   },
-  
+
   // Articles commandés (cards, decks, accessories)
   items: [{
     itemType: {
@@ -81,7 +80,7 @@ const orderSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.Mixed
     }
   }],
-  
+
   // Adresse de livraison
   shippingAddress: {
     street: {
@@ -103,7 +102,7 @@ const orderSchema = new mongoose.Schema({
     },
     additionalInfo: String
   },
-  
+
   // Adresse de facturation (si différente)
   billingAddress: {
     street: String,
@@ -115,7 +114,7 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  
+
   // Tarification
   pricing: {
     subtotal: {
@@ -140,7 +139,7 @@ const orderSchema = new mongoose.Schema({
       required: true
     }
   },
-  
+
   // Code promo
   promoCode: {
     code: String,
@@ -150,14 +149,14 @@ const orderSchema = new mongoose.Schema({
       enum: ['percentage', 'fixed']
     }
   },
-  
+
   // Statut de la commande
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
     default: 'pending'
   },
-  
+
   // Paiement
   payment: {
     method: {
@@ -175,7 +174,7 @@ const orderSchema = new mongoose.Schema({
     refundedAt: Date,
     refundAmount: Number
   },
-  
+
   // Livraison
   shipping: {
     method: {
@@ -190,11 +189,11 @@ const orderSchema = new mongoose.Schema({
     estimatedDelivery: Date,
     deliveredAt: Date
   },
-  
+
   // Notes
   customerNotes: String,
   internalNotes: String,
-  
+
   // Historique des changements de statut
   statusHistory: [{
     status: {
@@ -211,7 +210,7 @@ const orderSchema = new mongoose.Schema({
       ref: 'User'
     }
   }],
-  
+
   // Notifications envoyées
   notifications: {
     orderConfirmation: {
@@ -231,12 +230,12 @@ const orderSchema = new mongoose.Schema({
       sentAt: Date
     }
   },
-  
+
   // Dates importantes
   confirmedAt: Date,
   cancelledAt: Date,
   cancellationReason: String,
-  
+
   // Timestamps
   createdAt: {
     type: Date,
@@ -254,7 +253,7 @@ orderSchema.pre('save', async function(next) {
     const now = new Date();
     const year = now.getFullYear().toString().slice(-2);
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    
+
     // Compter les commandes du mois
     const count = await mongoose.model('Order').countDocuments({
       createdAt: {
@@ -262,11 +261,11 @@ orderSchema.pre('save', async function(next) {
         $lt: new Date(now.getFullYear(), now.getMonth() + 1, 1)
       }
     });
-    
+
     const orderNum = (count + 1).toString().padStart(4, '0');
     this.orderNumber = `ADD-${year}${month}-${orderNum}`;
   }
-  
+
   this.updatedAt = Date.now();
   next();
 });
@@ -287,7 +286,7 @@ orderSchema.methods.calculateTotal = function() {
   const subtotal = this.pricing.subtotal;
   const shipping = this.pricing.shippingCost;
   const discount = this.pricing.discount || 0;
-  
+
   // Calcul des frais de port selon les règles
   let actualShipping = shipping;
   if (subtotal >= 100) {
@@ -297,15 +296,15 @@ orderSchema.methods.calculateTotal = function() {
   } else {
     actualShipping = 4.99;
   }
-  
+
   // TVA 20% sur (subtotal - discount + shipping)
   const taxBase = subtotal - discount + actualShipping;
   const tax = taxBase * 0.20;
-  
+
   this.pricing.shippingCost = actualShipping;
   this.pricing.tax = parseFloat(tax.toFixed(2));
   this.pricing.total = parseFloat((taxBase + tax).toFixed(2));
-  
+
   return this.pricing.total;
 };
 
@@ -316,12 +315,22 @@ orderSchema.methods.markAsPaid = async function(transactionId) {
   this.payment.paidAt = new Date();
   this.status = 'confirmed';
   this.confirmedAt = new Date();
-  
+
   await this.save();
-  
+
   // TODO: Envoyer email de confirmation de paiement
   // TODO: Déduire le stock des produits
-  
+
+  return this;
+};
+
+// Méthode pour marquer comme échoué
+orderSchema.methods.markAsFailed = async function(transactionId) {
+  this.payment.status = 'failed';
+  this.payment.transactionId = transactionId;
+
+  await this.save();
+
   return this;
 };
 
@@ -332,15 +341,15 @@ orderSchema.methods.markAsShipped = async function(shippingInfo) {
   this.shipping.trackingNumber = shippingInfo.trackingNumber;
   this.shipping.trackingUrl = shippingInfo.trackingUrl;
   this.shipping.shippedAt = new Date();
-  
+
   if (shippingInfo.estimatedDelivery) {
     this.shipping.estimatedDelivery = shippingInfo.estimatedDelivery;
   }
-  
+
   await this.save();
-  
+
   // TODO: Envoyer email avec numéro de suivi
-  
+
   return this;
 };
 
@@ -349,16 +358,16 @@ orderSchema.methods.cancel = async function(reason) {
   if (['shipped', 'delivered'].includes(this.status)) {
     throw new Error('Impossible d\'annuler une commande déjà expédiée');
   }
-  
+
   this.status = 'cancelled';
   this.cancelledAt = new Date();
   this.cancellationReason = reason;
-  
+
   await this.save();
-  
+
   // TODO: Restaurer le stock des produits
   // TODO: Rembourser si déjà payé
-  
+
   return this;
 };
 

@@ -1,4 +1,5 @@
 const express = require('express');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
 const Order = require('../models/Order');
 const Card = require('../models/Card');
@@ -13,20 +14,20 @@ const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth
 router.post('/create-intent', optionalAuth, async (req, res) => {
   try {
     const { orderId } = req.body;
-    
+
     const order = await Order.findById(orderId);
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
-    
+
     // Vérifier que la commande appartient à l'utilisateur ou est une guest order
     if (order.user && req.user) {
       if (order.user.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Accès non autorisé' });
       }
     }
-    
+
     // TODO: Intégrer le vrai SDK Stripe
     // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     // const paymentIntent = await stripe.paymentIntents.create({
@@ -37,7 +38,7 @@ router.post('/create-intent', optionalAuth, async (req, res) => {
     //     orderNumber: order.orderNumber
     //   }
     // });
-    
+
     // MOCK pour le moment
     const mockPaymentIntent = {
       id: `pi_mock_${Date.now()}`,
@@ -45,13 +46,13 @@ router.post('/create-intent', optionalAuth, async (req, res) => {
       amount: Math.round(order.pricing.total * 100),
       currency: 'eur'
     };
-    
+
     res.json({
       clientSecret: mockPaymentIntent.client_secret,
       paymentIntentId: mockPaymentIntent.id,
       amount: order.pricing.total
     });
-    
+
   } catch (error) {
     console.error('Erreur create payment intent:', error);
     res.status(500).json({ error: error.message });
@@ -62,29 +63,29 @@ router.post('/create-intent', optionalAuth, async (req, res) => {
 router.post('/confirm', optionalAuth, async (req, res) => {
   try {
     const { orderId, paymentIntentId, paymentMethod } = req.body;
-    
+
     const order = await Order.findById(orderId);
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
-    
+
     // Marquer la commande comme payée
     await order.markAsPaid(paymentIntentId);
-    
+
     // Déduire le stock des produits
     for (const item of order.items) {
       let Model;
       if (item.itemModel === 'Card') Model = Card;
       else if (item.itemModel === 'Deck') Model = Deck;
       else if (item.itemModel === 'Accessory') Model = Accessory;
-      
+
       const product = await Model.findById(item.item);
       if (product && product.updateStock) {
         await product.updateStock(item.quantity, 'subtract');
       }
     }
-    
+
     // Mettre à jour les stats de l'utilisateur si connecté
     if (order.user) {
       const user = await User.findById(order.user);
@@ -92,9 +93,9 @@ router.post('/confirm', optionalAuth, async (req, res) => {
         await user.updateStatsAfterOrder(order.pricing.total);
       }
     }
-    
+
     // TODO: Envoyer email de confirmation de paiement
-    
+
     res.json({
       message: 'Paiement confirmé avec succès',
       order: {
@@ -103,7 +104,7 @@ router.post('/confirm', optionalAuth, async (req, res) => {
         total: order.pricing.total
       }
     });
-    
+
   } catch (error) {
     console.error('Erreur confirm payment:', error);
     res.status(500).json({ error: error.message });
@@ -111,32 +112,45 @@ router.post('/confirm', optionalAuth, async (req, res) => {
 });
 
 // POST /api/payment/webhook - Webhook Stripe
-router.post('/webhook', async (req, res) => {
+router.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   try {
+    let paymentIntent;
     const sig = req.headers['stripe-signature'];
-    
+
     // TODO: Vérifier la signature Stripe
-    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    // const event = stripe.webhooks.constructEvent(
-    //   req.body,
-    //   sig,
-    //   process.env.STRIPE_WEBHOOK_SECRET
-    // );
-    
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+
     // Traiter l'événement
-    // switch (event.type) {
-    //   case 'payment_intent.succeeded':
-    //     const paymentIntent = event.data.object;
-    //     const orderId = paymentIntent.metadata.orderId;
-    //     // Marquer la commande comme payée
-    //     break;
-    //   case 'payment_intent.payment_failed':
-    //     // Gérer l'échec du paiement
-    //     break;
-    // }
-    
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        paymentIntent = event.data.object;
+        const paidOrder = await Order.findById(paymentIntent.metadata.orderId);
+        // Marquer la commande comme payée
+        if (!paidOrder) {
+          return res.json(500, {error: "Commande introuvable"});
+        }
+
+        await paidOrder.markAsPaid(paymentIntent.id);
+        break;
+      case 'payment_intent.payment_failed':
+        paymentIntent = event.data.object;
+        const failedOrder = await Order.findById(paymentIntent.metadata.orderId);
+
+        if (!failedOrder) {
+          return res.json(500, {error: "Commande introuvable"});
+        }
+
+        // Gérer l'échec du paiement
+        await failedOrder.markAsFailed(paymentIntent.id);
+        break;
+    }
+
     res.json({ received: true });
-    
+
   } catch (error) {
     console.error('Erreur webhook:', error);
     res.status(400).json({ error: error.message });
@@ -149,13 +163,13 @@ router.post('/webhook', async (req, res) => {
 router.post('/paypal/create', optionalAuth, async (req, res) => {
   try {
     const { orderId } = req.body;
-    
+
     const order = await Order.findById(orderId);
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
-    
+
     // TODO: Intégrer le vrai SDK PayPal
     // const paypal = require('@paypal/checkout-server-sdk');
     // const request = new paypal.orders.OrdersCreateRequest();
@@ -169,7 +183,7 @@ router.post('/paypal/create', optionalAuth, async (req, res) => {
     //     }
     //   }]
     // });
-    
+
     // MOCK pour le moment
     const mockPayPalOrder = {
       id: `PAYPAL_${Date.now()}`,
@@ -181,12 +195,12 @@ router.post('/paypal/create', optionalAuth, async (req, res) => {
         }
       ]
     };
-    
+
     res.json({
       paypalOrderId: mockPayPalOrder.id,
       approvalUrl: mockPayPalOrder.links[0].href
     });
-    
+
   } catch (error) {
     console.error('Erreur create PayPal payment:', error);
     res.status(500).json({ error: error.message });
@@ -197,34 +211,34 @@ router.post('/paypal/create', optionalAuth, async (req, res) => {
 router.post('/paypal/capture', optionalAuth, async (req, res) => {
   try {
     const { orderId, paypalOrderId } = req.body;
-    
+
     const order = await Order.findById(orderId);
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
-    
+
     // TODO: Capturer le paiement PayPal
     // const paypal = require('@paypal/checkout-server-sdk');
     // const request = new paypal.orders.OrdersCaptureRequest(paypalOrderId);
     // const capture = await paypalClient.execute(request);
-    
+
     // Marquer la commande comme payée
     await order.markAsPaid(paypalOrderId);
-    
+
     // Déduire le stock
     for (const item of order.items) {
       let Model;
       if (item.itemModel === 'Card') Model = Card;
       else if (item.itemModel === 'Deck') Model = Deck;
       else if (item.itemModel === 'Accessory') Model = Accessory;
-      
+
       const product = await Model.findById(item.item);
       if (product && product.updateStock) {
         await product.updateStock(item.quantity, 'subtract');
       }
     }
-    
+
     res.json({
       message: 'Paiement PayPal confirmé',
       order: {
@@ -232,7 +246,7 @@ router.post('/paypal/capture', optionalAuth, async (req, res) => {
         status: order.status
       }
     });
-    
+
   } catch (error) {
     console.error('Erreur capture PayPal payment:', error);
     res.status(500).json({ error: error.message });
@@ -245,21 +259,21 @@ router.post('/paypal/capture', optionalAuth, async (req, res) => {
 router.post('/:orderId/refund', authenticate, requireAdmin, async (req, res) => {
   try {
     const { amount, reason } = req.body;
-    
+
     const order = await Order.findById(req.params.orderId);
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
-    
+
     if (order.payment.status !== 'completed') {
-      return res.status(400).json({ 
-        error: 'La commande n\'a pas été payée' 
+      return res.status(400).json({
+        error: 'La commande n\'a pas été payée'
       });
     }
-    
+
     const refundAmount = amount || order.pricing.total;
-    
+
     // TODO: Effectuer le remboursement via Stripe ou PayPal
     // if (order.payment.method === 'stripe') {
     //   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -268,34 +282,34 @@ router.post('/:orderId/refund', authenticate, requireAdmin, async (req, res) => 
     //     amount: Math.round(refundAmount * 100)
     //   });
     // }
-    
+
     // Mettre à jour la commande
     order.payment.status = 'refunded';
     order.payment.refundedAt = new Date();
     order.payment.refundAmount = refundAmount;
     order.status = 'refunded';
-    
+
     await order.save();
-    
+
     // Restaurer le stock
     for (const item of order.items) {
       let Model;
       if (item.itemModel === 'Card') Model = Card;
       else if (item.itemModel === 'Deck') Model = Deck;
       else if (item.itemModel === 'Accessory') Model = Accessory;
-      
+
       const product = await Model.findById(item.item);
       if (product && product.updateStock) {
         await product.updateStock(item.quantity, 'add');
       }
     }
-    
+
     res.json({
       message: 'Remboursement effectué',
       refundAmount,
       order
     });
-    
+
   } catch (error) {
     console.error('Erreur refund:', error);
     res.status(500).json({ error: error.message });
@@ -313,9 +327,9 @@ router.get('/history', authenticate, async (req, res) => {
     })
       .sort({ 'payment.paidAt': -1 })
       .select('orderNumber payment pricing createdAt');
-    
+
     res.json({ payments: orders });
-    
+
   } catch (error) {
     console.error('Erreur get payment history:', error);
     res.status(500).json({ error: error.message });
@@ -326,17 +340,17 @@ router.get('/history', authenticate, async (req, res) => {
 router.get('/stats', authenticate, requireAdmin, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     const filters = {
       'payment.status': 'completed'
     };
-    
+
     if (startDate || endDate) {
       filters['payment.paidAt'] = {};
       if (startDate) filters['payment.paidAt'].$gte = new Date(startDate);
       if (endDate) filters['payment.paidAt'].$lte = new Date(endDate);
     }
-    
+
     // Chiffre d'affaires total
     const totalRevenue = await Order.aggregate([
       { $match: filters },
@@ -348,7 +362,7 @@ router.get('/stats', authenticate, requireAdmin, async (req, res) => {
         }
       }
     ]);
-    
+
     // Chiffre d'affaires par méthode de paiement
     const revenueByMethod = await Order.aggregate([
       { $match: filters },
@@ -360,7 +374,7 @@ router.get('/stats', authenticate, requireAdmin, async (req, res) => {
         }
       }
     ]);
-    
+
     // Remboursements
     const refunds = await Order.aggregate([
       {
@@ -376,13 +390,13 @@ router.get('/stats', authenticate, requireAdmin, async (req, res) => {
         }
       }
     ]);
-    
+
     res.json({
       totalRevenue: totalRevenue[0] || { total: 0, count: 0 },
       revenueByMethod,
       refunds: refunds[0] || { total: 0, count: 0 }
     });
-    
+
   } catch (error) {
     console.error('Erreur get payment stats:', error);
     res.status(500).json({ error: error.message });
