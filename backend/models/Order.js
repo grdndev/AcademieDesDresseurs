@@ -153,7 +153,7 @@ const orderSchema = new mongoose.Schema({
   // Statut de la commande
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
+    enum: ['pending', 'locked', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
     default: 'pending'
   },
 
@@ -172,7 +172,8 @@ const orderSchema = new mongoose.Schema({
     transactionId: String,
     paidAt: Date,
     refundedAt: Date,
-    refundAmount: Number
+    refundAmount: Number,
+    lockedAt: Date
   },
 
   // Livraison
@@ -308,6 +309,15 @@ orderSchema.methods.calculateTotal = function() {
   return this.pricing.total;
 };
 
+// Méthode pour verrouiller la commande
+orderSchema.methods.lock = async function(transactionId) {
+  this.payment.transactionId = transactionId;
+  this.lockedAt = new Date();
+  this.status = 'locked'
+
+  await this.save();
+}
+
 // Méthode pour marquer comme payé
 orderSchema.methods.markAsPaid = async function(transactionId) {
   this.payment.status = 'completed';
@@ -320,16 +330,11 @@ orderSchema.methods.markAsPaid = async function(transactionId) {
 
   // TODO: Envoyer email de confirmation de paiement P2
 
-  // On déduit du stock
-  for (let item of this.items) {
-    item.item.updateStock(item.quantity, 'substract');
-  }
-
   return this;
 };
 
 // Méthode pour marquer comme échoué
-orderSchema.methods.markAsFailed = async function(transactionId) {
+orderSchema.methods.markPaymentAsFailed = async function(transactionId) {
   this.payment.status = 'failed';
   this.payment.transactionId = transactionId;
 
@@ -367,16 +372,40 @@ orderSchema.methods.cancel = async function(reason) {
   this.cancelledAt = new Date();
   this.cancellationReason = reason;
 
-  // On remet en stock
-  for (let item of this.items) {
-    item.item.updateStock(item.quantity, 'add');
-  }
+  await this.restock();
 
   await this.save();
 
   return this;
 };
 
+// Méthode pour retirer du stock
+orderSchema.methods.unstock = async function () {
+  await this.populate('items.item');
+
+  for (let item of this.items) {
+    await item.item.updateStock(item.quantity, 'subtract');
+  }
+
+  return this;
+}
+
+// Méthode pour remettre en stock
+orderSchema.methods.restock = async function () {
+  await this.populate('items.item');
+
+  for (let item of this.items) {
+    await item.item.updateStock(item.quantity, 'add');
+  }
+
+  if (this.status === 'locked') {
+    this.status = 'pending';
+    this.lockedAt = null;
+    await this.save();
+  }
+
+  return this;
+}
 
 // Méthode pour rembourser la commande
 orderSchema.methods.refund = async function(refundAmount) {

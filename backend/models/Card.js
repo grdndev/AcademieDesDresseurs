@@ -12,7 +12,7 @@ const cardSchema = new mongoose.Schema({
     required: [true, 'Nom anglais requis'],
     trim: true
   },
-  
+
   // Identification unique de la carte
   setCode: {
     type: String,
@@ -32,7 +32,7 @@ const cardSchema = new mongoose.Schema({
     trim: true
     // Format: "032/197" ou "086/197"
   },
-  
+
   // Caractéristiques
   rarity: {
     type: String,
@@ -48,13 +48,13 @@ const cardSchema = new mongoose.Schema({
     type: String
     // Ex: "Basic", "Stage 1", "Stage 2", "V", "VMAX", "ex", etc.
   },
-  
+
   // Type Pokémon (si applicable)
   pokemonType: [{
     type: String,
     enum: ['Colorless', 'Darkness', 'Dragon', 'Fairy', 'Fighting', 'Fire', 'Grass', 'Lightning', 'Metal', 'Psychic', 'Water']
   }],
-  
+
   // Prix et stock
   price: {
     type: Number,
@@ -76,7 +76,7 @@ const cardSchema = new mongoose.Schema({
       return 'available';
     }
   },
-  
+
   // Images
   images: {
     front: {
@@ -86,7 +86,7 @@ const cardSchema = new mongoose.Schema({
     back: String,
     thumbnail: String
   },
-  
+
   // Description et détails
   description: {
     type: String
@@ -105,7 +105,7 @@ const cardSchema = new mongoose.Schema({
     damage: String, // Ex: "120", "30+", "×"
     text: String
   }],
-  
+
   // Stats (pour Pokémon)
   hp: Number,
   retreatCost: Number,
@@ -117,7 +117,7 @@ const cardSchema = new mongoose.Schema({
     type: String,
     value: String // Ex: "-30"
   }],
-  
+
   // Informations complémentaires
   language: {
     type: String,
@@ -133,14 +133,14 @@ const cardSchema = new mongoose.Schema({
     default: false
   },
   releaseDate: Date,
-  
+
   // SEO et recherche
   tags: [String],
   slug: {
     type: String,
     unique: true
   },
-  
+
   // Statistiques
   popularity: {
     type: Number,
@@ -154,7 +154,7 @@ const cardSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  
+
   // Timestamps
   createdAt: {
     type: Date,
@@ -166,15 +166,19 @@ const cardSchema = new mongoose.Schema({
   }
 });
 
-// Générer le slug avant sauvegarde
-cardSchema.pre('save', function(next) {
+// Générer le slug avant validation
+cardSchema.pre('validate', function(next) {
   if (!this.slug) {
     const slugBase = `${this.nameFR.toLowerCase().replace(/\s+/g, '-')}-${this.setCode.toLowerCase()}-${this.cardNumber.replace('/', '-')}`;
     this.slug = slugBase.replace(/[^a-z0-9-]/g, '');
   }
-  this.updatedAt = Date.now();
   next();
 });
+
+cardSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+})
 
 // Méthode pour vérifier la disponibilité
 cardSchema.methods.isAvailable = function(quantity = 1) {
@@ -190,7 +194,7 @@ cardSchema.methods.updateStock = async function(quantity, operation = 'subtract'
   } else if (operation === 'set') {
     this.stock = Math.max(0, quantity);
   }
-  
+
   // Mettre à jour la disponibilité
   if (this.stock === 0) {
     this.availability = 'out-of-stock';
@@ -199,7 +203,7 @@ cardSchema.methods.updateStock = async function(quantity, operation = 'subtract'
   } else {
     this.availability = 'available';
   }
-  
+
   await this.save();
   return this.stock;
 };

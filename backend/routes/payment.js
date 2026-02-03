@@ -7,6 +7,7 @@ const Deck = require('../models/Deck');
 const Accessory = require('../models/Accessory');
 const User = require('../models/User');
 const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
+const { getModel } = require('../utils.js');
 
 // ==================== STRIPE ====================
 
@@ -28,8 +29,22 @@ router.post('/create-intent', optionalAuth, async (req, res) => {
       }
     }
 
+    // Vérifier le stock de la commande
+    let available = true;
+    for (let item of order.items) {
+      const Model = getModel(item.itemType);
+      const product = await Model.findById(item.item);
+
+      if (!await product.isAvailable(item.quantity)) {
+        available = false;
+      }
+    }
+
+    if (!available) {
+      return res.status(400).json({ error: 'Certains articles ne sont plus disponibles' });
+    }
+
     // TODO: Intégrer le vrai SDK Stripe
-    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     // const paymentIntent = await stripe.paymentIntents.create({
     //   amount: Math.round(order.pricing.total * 100), // en centimes
     //   currency: 'eur',
@@ -40,7 +55,7 @@ router.post('/create-intent', optionalAuth, async (req, res) => {
     // });
 
     // MOCK pour le moment
-    const mockPaymentIntent = {
+    const paymentIntent = {
       id: `pi_mock_${Date.now()}`,
       client_secret: `pi_mock_${Date.now()}_secret_${Math.random().toString(36).substring(7)}`,
       amount: Math.round(order.pricing.total * 100),
@@ -48,11 +63,15 @@ router.post('/create-intent', optionalAuth, async (req, res) => {
     };
 
     res.json({
-      clientSecret: mockPaymentIntent.client_secret,
-      paymentIntentId: mockPaymentIntent.id,
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
       amount: order.pricing.total
     });
 
+    if (order.status != 'locked') {
+      await order.unstock();
+      await order.lock(paymentIntent.id);
+    }
   } catch (error) {
     console.error('Erreur create payment intent:', error);
     res.status(500).json({ error: error.message });
@@ -129,8 +148,12 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
           return res.json(500, {error: "Commande introuvable"});
         }
 
+        // Remettre en stock
+        await failedOrder.restock();
+
         // Gérer l'échec du paiement
-        await failedOrder.markAsFailed(paymentIntent.id);
+        await failedOrder.markPaymentAsFailed(paymentIntent.id);
+
         break;
     }
 
@@ -153,6 +176,11 @@ router.post('/paypal/create', optionalAuth, async (req, res) => {
 
     if (!order) {
       return res.status(404).json({ error: 'Commande introuvable' });
+    }
+
+    // Vérifier le stock de la commande
+    if (order.checkUnavailable().length) {
+      return res.status(400).json({ error: 'Certains articles ne sont plus disponibles' });
     }
 
     // TODO: Intégrer le vrai SDK PayPal
@@ -186,6 +214,7 @@ router.post('/paypal/create', optionalAuth, async (req, res) => {
       approvalUrl: mockPayPalOrder.links[0].href
     });
 
+    await order.unstock();
   } catch (error) {
     console.error('Erreur create PayPal payment:', error);
     res.status(500).json({ error: error.message });
@@ -212,17 +241,7 @@ router.post('/paypal/capture', optionalAuth, async (req, res) => {
     await order.markAsPaid(paypalOrderId);
 
     // Déduire le stock
-    for (const item of order.items) {
-      let Model;
-      if (item.itemModel === 'Card') Model = Card;
-      else if (item.itemModel === 'Deck') Model = Deck;
-      else if (item.itemModel === 'Accessory') Model = Accessory;
-
-      const product = await Model.findById(item.item);
-      if (product && product.updateStock) {
-        await product.updateStock(item.quantity, 'subtract');
-      }
-    }
+    await order.unstock();
 
     res.json({
       message: 'Paiement PayPal confirmé',
@@ -259,22 +278,9 @@ router.post('/:orderId/refund', authenticate, requireAdmin, async (req, res) => 
 
     const refundAmount = amount || order.pricing.total;
 
-    order.refund(refundAmount);
+    await order.refund(refundAmount);
 
     await order.save();
-
-    // Restaurer le stock
-    for (const item of order.items) {
-      let Model;
-      if (item.itemModel === 'Card') Model = Card;
-      else if (item.itemModel === 'Deck') Model = Deck;
-      else if (item.itemModel === 'Accessory') Model = Accessory;
-
-      const product = await Model.findById(item.item);
-      if (product && product.updateStock) {
-        await product.updateStock(item.quantity, 'add');
-      }
-    }
 
     res.json({
       message: 'Remboursement effectué',

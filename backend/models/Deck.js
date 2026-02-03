@@ -15,7 +15,7 @@ const deckSchema = new mongoose.Schema({
     type: String,
     maxlength: 200
   },
-  
+
   // Composition du deck
   cards: [{
     card: {
@@ -30,7 +30,7 @@ const deckSchema = new mongoose.Schema({
       max: 4 // Règle Pokémon TCG: max 4 exemplaires d'une carte (sauf Énergies de base)
     }
   }],
-  
+
   // Prix et stock
   price: {
     type: Number,
@@ -47,7 +47,7 @@ const deckSchema = new mongoose.Schema({
     enum: ['available', 'low-stock', 'out-of-stock', 'custom'],
     default: 'custom'
   },
-  
+
   // Catégorisation
   category: {
     type: String,
@@ -64,21 +64,21 @@ const deckSchema = new mongoose.Schema({
     trim: true
     // Ex: "Gardevoir ex", "Lost Zone Box", "Charizard ex", etc.
   },
-  
+
   // Niveau de difficulté
   difficulty: {
     type: String,
     enum: ['beginner', 'intermediate', 'advanced', 'expert'],
     default: 'intermediate'
   },
-  
+
   // Style de jeu
   strategy: {
     type: String,
     enum: ['aggro', 'control', 'combo', 'midrange', 'stall'],
     default: 'midrange'
   },
-  
+
   // Images
   coverImage: {
     type: String,
@@ -86,7 +86,7 @@ const deckSchema = new mongoose.Schema({
   },
   thumbnailImage: String,
   cardImages: [String], // Images des cartes principales du deck
-  
+
   // Auteur
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -100,7 +100,7 @@ const deckSchema = new mongoose.Schema({
     type: Boolean,
     default: true // Les decks custom peuvent être privés
   },
-  
+
   // Résultats en tournoi (si applicable)
   tournamentResults: [{
     tournament: String,
@@ -113,7 +113,7 @@ const deckSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
-  
+
   // Statistiques
   viewCount: {
     type: Number,
@@ -139,20 +139,20 @@ const deckSchema = new mongoose.Schema({
       default: 0
     }
   },
-  
+
   // Accessoires recommandés
   recommendedAccessories: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Accessory'
   }],
-  
+
   // SEO
   tags: [String],
   slug: {
     type: String,
     unique: true
   },
-  
+
   // Timestamps
   createdAt: {
     type: Date,
@@ -187,13 +187,35 @@ deckSchema.methods.getTotalCards = function() {
   return this.cards.reduce((sum, item) => sum + item.quantity, 0);
 };
 
+// Méthode pour vérifier la disponibilité
+deckSchema.methods.isAvailable = async function(quantity = 1) {
+  await this.populate('cards.card');
+
+  for (let item of this.cards) {
+    if (!item.card.isAvailable(item.quantity * quantity))
+      return false;
+  }
+
+  return true;
+};
+
+deckSchema.methods.updateStock = async function(quantity, operation = 'subtract') {
+  await this.populate('cards.card');
+
+  for (let item of this.cards) {
+    await item.card.updateStock(item.quantity, operation);
+  }
+
+  return this;
+}
+
 // Méthode pour vérifier la disponibilité complète du deck
 deckSchema.methods.checkAvailability = async function() {
   await this.populate('cards.card');
-  
+
   const unavailableCards = [];
   let fullyAvailable = true;
-  
+
   for (const item of this.cards) {
     if (!item.card.isAvailable(item.quantity)) {
       fullyAvailable = false;
@@ -204,7 +226,7 @@ deckSchema.methods.checkAvailability = async function() {
       });
     }
   }
-  
+
   return {
     fullyAvailable,
     unavailableCards
@@ -214,13 +236,13 @@ deckSchema.methods.checkAvailability = async function() {
 // Méthode pour obtenir la liste formatée (export Limitless, etc.)
 deckSchema.methods.getFormattedList = async function() {
   await this.populate('cards.card');
-  
+
   let list = '';
   for (const item of this.cards) {
     const card = item.card;
     list += `${item.quantity}× ${card.nameFR} (${card.setCode} ${card.cardNumber})\n`;
   }
-  
+
   return list.trim();
 };
 

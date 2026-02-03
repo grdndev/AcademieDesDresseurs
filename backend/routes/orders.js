@@ -1,21 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const Card = require('../models/Card');
-const Deck = require('../models/Deck');
-const Accessory = require('../models/Accessory');
 const User = require('../models/User');
 const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
-
-// Helper pour obtenir le modèle selon le type
-const getModel = (itemType) => {
-  switch (itemType) {
-    case 'card': return Card;
-    case 'deck': return Deck;
-    case 'accessory': return Accessory;
-    default: throw new Error('Type d\'article invalide');
-  }
-};
+const { getModel } = require('../utils.js');
 
 // ==================== ROUTES PUBLIQUES/UTILISATEUR ====================
 
@@ -51,15 +39,13 @@ router.post('/', optionalAuth, async (req, res) => {
         });
       }
 
-      if (!product.isAvailable(item.quantity)) {
+      if (!await product.isAvailable(item.quantity)) {
         return res.status(400).json({
           error: `Stock insuffisant pour ${product.name || product.nameFR}`
         });
       }
 
-      const itemSubtotal = product.price * item.quantity;
-      subtotal += itemSubtotal;
-
+      subtotal += product.price * item.quantity;
       processedItems.push({
         itemType: item.itemType,
         item: product._id,
@@ -68,7 +54,7 @@ router.post('/', optionalAuth, async (req, res) => {
         name: product.name || product.nameFR,
         quantity: item.quantity,
         unitPrice: product.price,
-        subtotal: itemSubtotal,
+        subtotal: product.price * item.quantity,
         snapshot: product.toObject()
       });
     }
