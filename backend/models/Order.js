@@ -318,8 +318,12 @@ orderSchema.methods.markAsPaid = async function(transactionId) {
 
   await this.save();
 
-  // TODO: Envoyer email de confirmation de paiement
-  // TODO: Déduire le stock des produits
+  // TODO: Envoyer email de confirmation de paiement P2
+
+  // On déduit du stock
+  for (let item of this.items) {
+    item.item.updateStock(item.quantity, 'substract');
+  }
 
   return this;
 };
@@ -348,7 +352,7 @@ orderSchema.methods.markAsShipped = async function(shippingInfo) {
 
   await this.save();
 
-  // TODO: Envoyer email avec numéro de suivi
+  // TODO: Envoyer email avec numéro de suivi P2
 
   return this;
 };
@@ -363,13 +367,39 @@ orderSchema.methods.cancel = async function(reason) {
   this.cancelledAt = new Date();
   this.cancellationReason = reason;
 
-  await this.save();
+  // On remet en stock
+  for (let item of this.items) {
+    item.item.updateStock(item.quantity, 'add');
+  }
 
-  // TODO: Restaurer le stock des produits
-  // TODO: Rembourser si déjà payé
+  await this.save();
 
   return this;
 };
+
+
+// Méthode pour rembourser la commande
+orderSchema.methods.refund = async function(refundAmount) {
+  //STRIPE
+  if (this.payment.method === 'stripe') {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const refund = await stripe.refund.create({
+      charge: this.payment.transactionId,
+      amount: refundAmount * 100 //cents
+    });
+  }
+
+  //TODO: Paypal
+
+  this.payment.status = 'refunded';
+  this.payment.refundedAt = new Date();
+  this.payment.refundAmount = refundAmount;
+  this.status = 'refunded';
+
+  await this.save();
+
+  return this;
+}
 
 // Index pour optimiser les recherches
 orderSchema.index({ orderNumber: 1 }, { unique: true });

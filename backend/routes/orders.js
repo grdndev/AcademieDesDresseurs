@@ -249,9 +249,13 @@ router.put('/:id/cancel', optionalAuth, async (req, res) => {
       }
     }
 
+    // Marquer comme annulé + Restock
     await order.cancel(reason || 'Annulation client');
 
-    // TODO: Restaurer le stock des produits
+    // Rembourser si nécessaire
+    if (order.payment.status === 'completed') {
+      await order.refund(order.pricing.total);
+    }
 
     res.json({
       message: 'Commande annulée avec succès',
@@ -396,7 +400,7 @@ router.put('/:id/delivered', authenticate, requireAdmin, async (req, res) => {
 
     await order.save();
 
-    // TODO: Envoyer email de confirmation de livraison
+    // TODO: Envoyer email de confirmation de livraison P2
 
     res.json({
       message: 'Commande marquée comme livrée',

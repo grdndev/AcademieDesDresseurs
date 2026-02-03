@@ -70,21 +70,8 @@ router.post('/confirm', optionalAuth, async (req, res) => {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
 
-    // Marquer la commande comme payée
+    // Marquer la commande comme payée + envoi du mail + déduction du stock
     await order.markAsPaid(paymentIntentId);
-
-    // Déduire le stock des produits
-    for (const item of order.items) {
-      let Model;
-      if (item.itemModel === 'Card') Model = Card;
-      else if (item.itemModel === 'Deck') Model = Deck;
-      else if (item.itemModel === 'Accessory') Model = Accessory;
-
-      const product = await Model.findById(item.item);
-      if (product && product.updateStock) {
-        await product.updateStock(item.quantity, 'subtract');
-      }
-    }
 
     // Mettre à jour les stats de l'utilisateur si connecté
     if (order.user) {
@@ -93,8 +80,6 @@ router.post('/confirm', optionalAuth, async (req, res) => {
         await user.updateStatsAfterOrder(order.pricing.total);
       }
     }
-
-    // TODO: Envoyer email de confirmation de paiement
 
     res.json({
       message: 'Paiement confirmé avec succès',
@@ -117,7 +102,7 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
     let paymentIntent;
     const sig = req.headers['stripe-signature'];
 
-    // TODO: Vérifier la signature Stripe
+    // Vérifier la signature Stripe
     const event = stripe.webhooks.constructEvent(
       req.body,
       sig,
@@ -129,11 +114,11 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
       case 'payment_intent.succeeded':
         paymentIntent = event.data.object;
         const paidOrder = await Order.findById(paymentIntent.metadata.orderId);
-        // Marquer la commande comme payée
         if (!paidOrder) {
           return res.json(500, {error: "Commande introuvable"});
         }
 
+        // Marquer la commande comme payée
         await paidOrder.markAsPaid(paymentIntent.id);
         break;
       case 'payment_intent.payment_failed':
@@ -274,20 +259,7 @@ router.post('/:orderId/refund', authenticate, requireAdmin, async (req, res) => 
 
     const refundAmount = amount || order.pricing.total;
 
-    // TODO: Effectuer le remboursement via Stripe ou PayPal
-    // if (order.payment.method === 'stripe') {
-    //   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    //   await stripe.refunds.create({
-    //     payment_intent: order.payment.transactionId,
-    //     amount: Math.round(refundAmount * 100)
-    //   });
-    // }
-
-    // Mettre à jour la commande
-    order.payment.status = 'refunded';
-    order.payment.refundedAt = new Date();
-    order.payment.refundAmount = refundAmount;
-    order.status = 'refunded';
+    order.refund(refundAmount);
 
     await order.save();
 
