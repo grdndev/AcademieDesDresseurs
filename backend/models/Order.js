@@ -289,7 +289,7 @@ orderSchema.methods.calculateCosts = async function() {
 
   if (this.promocode) {
     if (this.promocode.isValid()) {
-      discount = this.promocode.applyDiscount(subtotal);
+      discount = this.promocode.calculateDiscount(subtotal);
     }
   }
 

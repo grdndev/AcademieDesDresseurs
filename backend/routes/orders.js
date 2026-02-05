@@ -61,7 +61,6 @@ router.post('/', optionalAuth, async (req, res) => {
     }
 
     let promo = promocode ? await Promocode.findOne({ code: promocode }) : null;
-    console.log(promo);
 
     // Créer la commande
     const orderData = {

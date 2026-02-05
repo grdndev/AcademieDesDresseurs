@@ -35,13 +35,14 @@ promocodeSchema.methods.isValid = function() {
   return true;
 };
 
-promocodeSchema.methods.applyDiscount = function(total) {
+promocodeSchema.methods.calculateDiscount = function(total) {
   if (this.type === 'percentage') {
-    return total - (total * this.amount / 100);
+    return total * this.amount / 100;
   } else if (this.type === 'fixed') {
-    return total - Math.min(total, this.amount);
+    return Math.min(total, this.amount);
   }
-  return total;
+
+  return 0;
 };
 
 module.exports = mongoose.model('Promocode', promocodeSchema);
