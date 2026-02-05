@@ -59,33 +59,6 @@ router.post('/', optionalAuth, async (req, res) => {
       });
     }
 
-    // Calculer les frais de port
-    let shippingCost = 0;
-    if (subtotal < 50) {
-      shippingCost = 4.99;
-    } else if (subtotal < 100) {
-      shippingCost = 2.99;
-    }
-    // Gratuit à partir de 100€
-
-    // Appliquer le code promo (TODO: implémenter la validation)
-    let discount = 0;
-    let promoData = null;
-    if (promoCode) {
-      // TODO: Valider le code promo
-      // Pour l'instant, on le stocke juste
-      promoData = {
-        code: promoCode,
-        discountAmount: 0,
-        discountType: 'fixed'
-      };
-    }
-
-    // Calculer la TVA (20%)
-    const taxBase = subtotal - discount + shippingCost;
-    const tax = parseFloat((taxBase * 0.20).toFixed(2));
-    const total = parseFloat((taxBase + tax).toFixed(2));
-
     // Créer la commande
     const orderData = {
       user: req.user ? req.user._id : undefined,
@@ -95,14 +68,12 @@ router.post('/', optionalAuth, async (req, res) => {
       shippingAddress,
       billingAddress,
       useSameAddress: useSameAddress !== false,
-      pricing: {
-        subtotal,
-        shippingCost,
-        discount,
-        tax,
-        total
-      },
-      promoCode: promoData,
+      pricing: { subtotal },
+      promoCode: promoCode ? {
+        code: promoCode,
+        discountAmount: 0,
+        discountType: 'fixed'
+      } : null,
       payment: {
         method: paymentMethod || 'stripe'
       },
@@ -110,7 +81,7 @@ router.post('/', optionalAuth, async (req, res) => {
     };
 
     const order = new Order(orderData);
-    await order.save();
+    await order.calculateCosts().save();
 
     res.status(201).json({
       message: 'Commande créée avec succès',

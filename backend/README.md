@@ -291,6 +291,7 @@ refunded
 | Statut      | Description                                       | Actions possibles                |
 |-------------|---------------------------------------------------|----------------------------------|
 | `pending`   | Créée, en attente de paiement                     | Annuler, Payer                   |
+| `locked`    | Paiement en cours, inventaire verrouillé          | Annuler, Payer, Echouer paiement |
 | `confirmed` | Payée, en attente de traitement                   | Annuler (avec remboursement)     |
 | `processing`| En cours de préparation                           | Expédier                         |
 | `shipped`   | Expédiée, en transit                              | Marquer comme livrée             |

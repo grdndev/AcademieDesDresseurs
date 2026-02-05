@@ -67,15 +67,6 @@ const cardSchema = new mongoose.Schema({
     min: 0,
     default: 0
   },
-  availability: {
-    type: String,
-    enum: ['available', 'low-stock', 'out-of-stock', 'pre-order'],
-    default: function() {
-      if (this.stock === 0) return 'out-of-stock';
-      if (this.stock <= 5) return 'low-stock';
-      return 'available';
-    }
-  },
 
   // Images
   images: {
@@ -165,6 +156,15 @@ const cardSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+cardSchema.virtual('availability').get(function() {
+  if (this.stock > 5) {
+    return 'available';
+  } else if (this.stock > 0) {
+    return 'low-stock';
+  }
+  return 'out-of-stock';
+})
 
 // Générer le slug avant validation
 cardSchema.pre('validate', function(next) {

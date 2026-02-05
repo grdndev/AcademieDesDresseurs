@@ -12,6 +12,9 @@ const getModel = (itemType) => {
   }
 };
 
+const toFloat2 = (num) => parseFloat(num.toFixed(2));
+
 module.exports = {
-    getModel
+    getModel,
+    toFloat2
 };

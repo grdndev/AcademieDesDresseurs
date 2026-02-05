@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { toFloat2 } = require('../utils.js');
 
 const orderSchema = new mongoose.Schema({
   // Numéro de commande unique (Format: ADD-YYMM-XXXX)
@@ -123,7 +124,6 @@ const orderSchema = new mongoose.Schema({
     },
     shippingCost: {
       type: Number,
-      required: true,
       default: 0
     },
     discount: {
@@ -131,12 +131,10 @@ const orderSchema = new mongoose.Schema({
       default: 0
     },
     tax: {
-      type: Number,
-      required: true
+      type: Number
     },
     total: {
-      type: Number,
-      required: true
+      type: Number
     }
   },
 
@@ -268,8 +266,10 @@ orderSchema.pre('save', async function(next) {
   }
 
   this.updatedAt = Date.now();
+
   next();
 });
+
 
 // Ajouter un événement à l'historique lors du changement de statut
 orderSchema.pre('save', function(next) {
@@ -279,34 +279,33 @@ orderSchema.pre('save', function(next) {
       date: new Date()
     });
   }
+
   next();
 });
 
-// Méthode pour calculer le total
-orderSchema.methods.calculateTotal = function() {
-  const subtotal = this.pricing.subtotal;
-  const shipping = this.pricing.shippingCost;
-  const discount = this.pricing.discount || 0;
+// Calculer tous les coûts à partir du sous-total
+orderSchema.methods.calculateCosts = function() {
+  let subtotal = this.pricing.subtotal;
+  let shipping = subtotal < 50 ? 4.99 : subtotal < 100 ? 2.99 : 0;
+  let discount = 0;
 
-  // Calcul des frais de port selon les règles
-  let actualShipping = shipping;
-  if (subtotal >= 100) {
-    actualShipping = 0; // Gratuit à partir de 100€
-  } else if (subtotal >= 50) {
-    actualShipping = 2.99;
-  } else {
-    actualShipping = 4.99;
+  if (this.promoCode) {
+    if (this.promoCode.discountType === 'percentage') {
+      discount = subtotal * (this.promoCode.value / 100);
+    } else if (this.promoCode.discountType === 'fixed') {
+      discount = this.promoCode.value;
+    }
+    discount = Math.min(discount, subtotal);
   }
 
-  // TVA 20% sur (subtotal - discount + shipping)
-  const taxBase = subtotal - discount + actualShipping;
-  const tax = taxBase * 0.20;
+  let tax = toFloat2((subtotal + shipping - discount) * 0.2);
 
-  this.pricing.shippingCost = actualShipping;
-  this.pricing.tax = parseFloat(tax.toFixed(2));
-  this.pricing.total = parseFloat((taxBase + tax).toFixed(2));
+  this.pricing.shippingCost = shipping;
+  this.pricing.discount = discount;
+  this.pricing.tax = tax;
+  this.pricing.total = toFloat2(subtotal + shipping + tax - discount);
 
-  return this.pricing.total;
+  return this;
 };
 
 // Méthode pour verrouiller la commande
