@@ -43,14 +43,16 @@ backend/
 │   ├── Card.js            # Modèle carte Pokemon
 │   ├── Deck.js            # Modèle deck
 │   ├── Accessory.js       # Modèle accessoire
-│   └── Order.js           # Modèle commande
+│   ├── Order.js           # Modèle commande
+│   └── Promocode.js       # Modèle code promo
 ├── routes/
 │   ├── users.js           # Routes utilisateurs
 │   ├── cards.js           # Routes cartes
 │   ├── decks.js           # Routes decks
 │   ├── accessories.js     # Routes accessoires
 │   ├── orders.js          # Routes commandes
-│   └── payment.js         # Routes paiement
+│   ├── payment.js         # Routes paiement
+│   └── promocodes.js      # Routes codes promo
 ├── index.js               # Point d'entrée
 ├── package.json
 ├── .env

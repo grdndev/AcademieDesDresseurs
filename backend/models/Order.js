@@ -139,13 +139,9 @@ const orderSchema = new mongoose.Schema({
   },
 
   // Code promo
-  promoCode: {
-    code: String,
-    discountAmount: Number,
-    discountType: {
-      type: String,
-      enum: ['percentage', 'fixed']
-    }
+  promocode: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Promocode'
   },
 
   // Statut de la commande
@@ -284,18 +280,17 @@ orderSchema.pre('save', function(next) {
 });
 
 // Calculer tous les coûts à partir du sous-total
-orderSchema.methods.calculateCosts = function() {
+orderSchema.methods.calculateCosts = async function() {
+  await this.populate('promocode');
+
   let subtotal = this.pricing.subtotal;
   let shipping = subtotal < 50 ? 4.99 : subtotal < 100 ? 2.99 : 0;
   let discount = 0;
 
-  if (this.promoCode) {
-    if (this.promoCode.discountType === 'percentage') {
-      discount = subtotal * (this.promoCode.value / 100);
-    } else if (this.promoCode.discountType === 'fixed') {
-      discount = this.promoCode.value;
+  if (this.promocode) {
+    if (this.promocode.isValid()) {
+      discount = this.promocode.applyDiscount(subtotal);
     }
-    discount = Math.min(discount, subtotal);
   }
 
   let tax = toFloat2((subtotal + shipping - discount) * 0.2);
@@ -304,6 +299,8 @@ orderSchema.methods.calculateCosts = function() {
   this.pricing.discount = discount;
   this.pricing.tax = tax;
   this.pricing.total = toFloat2(subtotal + shipping + tax - discount);
+
+  await this.save();
 
   return this;
 };

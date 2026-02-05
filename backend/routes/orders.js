@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const User = require('../models/User');
+const Promocode = require('../models/Promocode');
 const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { getModel } = require('../utils.js');
 
@@ -16,7 +17,7 @@ router.post('/', optionalAuth, async (req, res) => {
       shippingAddress,
       billingAddress,
       useSameAddress,
-      promoCode,
+      promocode,
       paymentMethod
     } = req.body;
 
@@ -59,6 +60,9 @@ router.post('/', optionalAuth, async (req, res) => {
       });
     }
 
+    let promo = promocode ? await Promocode.findOne({ code: promocode }) : null;
+    console.log(promo);
+
     // Créer la commande
     const orderData = {
       user: req.user ? req.user._id : undefined,
@@ -69,11 +73,7 @@ router.post('/', optionalAuth, async (req, res) => {
       billingAddress,
       useSameAddress: useSameAddress !== false,
       pricing: { subtotal },
-      promoCode: promoCode ? {
-        code: promoCode,
-        discountAmount: 0,
-        discountType: 'fixed'
-      } : null,
+      promocode: promo,
       payment: {
         method: paymentMethod || 'stripe'
       },
@@ -81,7 +81,7 @@ router.post('/', optionalAuth, async (req, res) => {
     };
 
     const order = new Order(orderData);
-    await order.calculateCosts().save();
+    await order.calculateCosts();
 
     res.status(201).json({
       message: 'Commande créée avec succès',
