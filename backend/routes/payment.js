@@ -89,7 +89,8 @@ router.post('/confirm', optionalAuth, async (req, res) => {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
 
-    // Marquer la commande comme payée + envoi du mail + déduction du stock
+    // Marquer la commande comme payée + envoi du mail
+    await order.unstock();
     await order.markAsPaid(paymentIntentId);
 
     // Mettre à jour les stats de l'utilisateur si connecté

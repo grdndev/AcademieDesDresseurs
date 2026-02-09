@@ -45,6 +45,10 @@ router.get('/', async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    for (const card of cards) {
+      await card.checkImage();
+    }
+
     const total = await Card.countDocuments(filters);
 
     res.json({
@@ -277,6 +281,8 @@ router.post('/', authenticate, requireEditor, async (req, res) => {
     const card = new Card(req.body);
     await card.save();
 
+    await card.checkImage();
+
     res.status(201).json({
       message: 'Carte créée avec succès',
       card
@@ -298,6 +304,10 @@ router.post('/batch/create', authenticate, requireEditor, async (req, res) => {
     }
 
     const createdCards = await Card.insertMany(cards);
+
+    for (const card of createdCards) {
+      await card.checkImage();
+    }
 
     res.status(201).json({
       message: `${createdCards.length} cartes créées avec succès`,

@@ -1,43 +1,18 @@
-import Navbar from "../components/Navbar";
-import { Search, ShoppingCart, Filter, Box, Zap, Layers } from "lucide-react";
+import { Filter, Box, Zap, Layers } from "lucide-react";
+import Link from "next/link";
 
 export default function SEquiperPage() {
     const categories = [
-        { title: "Decks Préconstruits", count: 24, icon: Layers },
-        { title: "Cartes à l'unité", count: "5000+", icon: Zap },
-        { title: "Accessoires", count: 120, icon: Box },
+        { title: "Decks Préconstruits", count: 24, icon: Layers, href: "/sequiper/decks" },
+        { title: "Cartes à l'unité", count: "5000+", icon: Zap, href: "/sequiper/cartes" },
+        { title: "Accessoires", count: 120, icon: Box, href: "/sequiper/accessoires" },
     ];
 
-    return (
-        <div className="min-h-screen bg-[#F9FAEE] font-outfit">
-            <Navbar />
-
-            {/* Header Boutique */}
-            <div className="bg-white border-b border-gray-200 py-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div>
-                            <h1 className="text-4xl font-black text-slate-900">Boutique Officielle</h1>
-                            <p className="text-gray-500 mt-2">Équipez-vous avec le meilleur matériel TCG.</p>
-                        </div>
-
-                        <div className="relative max-w-md w-full">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Rechercher un deck, une carte..."
-                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none shadow-sm"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    return (<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Categories */}
                 <div className="grid md:grid-cols-3 gap-6 mb-16">
                     {categories.map((cat, idx) => (
-                        <div key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-md transition-shadow cursor-pointer">
+                        <Link href={cat.href} key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-md transition-shadow cursor-pointer">
                             <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-primary">
                                 <cat.icon className="w-7 h-7" />
                             </div>
@@ -45,7 +20,7 @@ export default function SEquiperPage() {
                                 <h3 className="font-bold text-lg">{cat.title}</h3>
                                 <span className="text-sm text-gray-500">{cat.count} articles</span>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
 
@@ -58,7 +33,7 @@ export default function SEquiperPage() {
                             Collez votre decklist (Limitless/Live) et nous préparons votre panier automatiquement selon nos stocks.
                         </p>
                         <button className="px-8 py-4 bg-white text-primary rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2">
-                            Essayer l'outil
+                            Essayer l&apos;outil
                             <Zap className="w-5 h-5 fill-current" />
                         </button>
                     </div>
@@ -93,6 +68,5 @@ export default function SEquiperPage() {
                     ))}
                 </div>
             </main>
-        </div>
     );
 }

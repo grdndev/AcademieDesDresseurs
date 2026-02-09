@@ -7,6 +7,35 @@ const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth
 const { getModel } = require('../utils.js');
 
 // ==================== ROUTES PUBLIQUES/UTILISATEUR ====================
+// POST /api/orders/check-cart - Avant de pouvoir créer une commande vérifier les stocks
+router.post('/check-cart', async (req, res) => {
+  try {
+    const {
+      items
+    } = req.body;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'Panier vide' });
+    }
+
+    const ok = false;
+    const stock = [];
+
+    for (const item of items) {
+      const Model = getModel(item.itemType);
+      const product = await Model.findById(item.itemId);
+
+      stock.push(product);
+    }
+
+    console.log(stock);
+
+    res.status(200).json({ok, stock});
+  } catch (error) {
+    console.error('Erreur create order:', error);
+    res.status(500).json({ error: error.message });
+  }
+})
 
 // POST /api/orders - Créer une nouvelle commande
 router.post('/', optionalAuth, async (req, res) => {

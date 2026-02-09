@@ -22,7 +22,11 @@ const cardSchema = new mongoose.Schema({
     index: true
     // Ex: "OBF" pour Obsidian Flames, "PAL" pour Paldea Evolved
   },
-  setName: {
+  setNameFR: {
+    type: String,
+    required: true
+  },
+  setNameEN: {
     type: String,
     required: true
   },
@@ -71,8 +75,7 @@ const cardSchema = new mongoose.Schema({
   // Images
   images: {
     front: {
-      type: String,
-      required: true
+      type: String
     },
     back: String,
     thumbnail: String
@@ -175,7 +178,7 @@ cardSchema.pre('validate', function(next) {
   next();
 });
 
-cardSchema.pre('save', function (next) {
+cardSchema.pre('save', async function (next) {
   this.updatedAt = Date.now();
   next();
 })
@@ -213,8 +216,22 @@ cardSchema.methods.getUniqueIdentifier = function() {
   return `${this.setCode}-${this.cardNumber}`;
 };
 
+// Utilise TCGDex pour afficher les images
+cardSchema.methods.checkImage = async function() {
+  if (!this.images.front) {
+    try {
+      const set = await fetch("https://api.tcgdex.net/v2/fr/sets?name=" + this.setNameFR).then(res => res.json())
+      this.images.front = `https://assets.tcgdex.net/fr/${set[0].id.match(/^\D+/)[0]}/${set[0].id}/${this.cardNumber}/high.png`
+    } catch(e) {
+    }
+  }
+
+  await this.save();
+  return this;
+}
+
 // Index pour optimiser les recherches
-cardSchema.index({ nameFR: 'text', nameEN: 'text', setName: 'text' });
+cardSchema.index({ nameFR: 'text', nameEN: 'text', setNameFR: 'text', setNameEN: 'text' });
 cardSchema.index({ setCode: 1, cardNumber: 1 }, { unique: true });
 cardSchema.index({ type: 1 });
 cardSchema.index({ rarity: 1 });
