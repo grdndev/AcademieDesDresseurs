@@ -25,9 +25,9 @@ interface Order {
     phone: string;
   };
   shippingAddress: {
-    streetAddress: string;
+    street: string;
     city: string;
-    postalCode: string;
+    zipCode: string;
     country: string;
   };
   items: OrderItem[];
@@ -35,6 +35,7 @@ interface Order {
     subtotal: number;
     shippingCost: number;
     discount: number;
+    tax: number;
     total: number;
   };
   payment: {
@@ -91,8 +92,6 @@ export default function PaymentPage() {
         },
         body: JSON.stringify({ orderId }),
       });
-
-      console.log(response);
 
       if (!response.ok) {
         throw new Error("Erreur lors du traitement du paiement");

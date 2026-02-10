@@ -28,8 +28,6 @@ router.post('/check-cart', async (req, res) => {
       stock.push(product);
     }
 
-    console.log(stock);
-
     res.status(200).json({ok, stock});
   } catch (error) {
     console.error('Erreur create order:', error);

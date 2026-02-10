@@ -1,29 +1,20 @@
 "use client";
 
 import { createContext, useContext, useReducer, useEffect } from "react";
-
-type CartItem = {
-  _id: string;
-  nameFR?: string;
-  nameEN?: string;
-  price: number;
-  quantity: number;
-  stock?: number;
-  itemType: 'card' | 'deck' | 'accessory';
-  [key: string]: any;
-};
+import { cartItem } from "../types/card";
 
 type CartState = {
-  items: CartItem[];
+  items: cartItem[];
 };
 
 type Action =
-  | { type: "ADD_ITEM"; payload: CartItem }
+  | { type: "ADD_ITEM"; payload: cartItem }
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
-  | { type: "SET_STOCK"; payload: CartItem[] }
+  | { type: "SET_STOCK"; payload: cartItem[] }
   | { type: "CLEAR_CART" };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CartContext = createContext<any>(null);
 
 function cartReducer(state: CartState, action: Action): CartState {
@@ -84,7 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       dispatch({
         type: "CLEAR_CART",
       });
-      JSON.parse(stored).forEach((item: CartItem) =>
+      JSON.parse(stored).forEach((item: cartItem) =>
         dispatch({ type: "ADD_ITEM", payload: item })
       );
     }

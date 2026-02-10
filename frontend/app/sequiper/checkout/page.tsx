@@ -5,6 +5,7 @@ import { useCart } from "../../context/cart-provider";
 import { formatPrice } from "../../utils";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { cartItem } from "@/app/types/card";
 
 interface FormData {
   firstName: string;
@@ -43,7 +44,7 @@ export default function CheckoutPage() {
   });
 
   const total = state.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum: number, item: {price: number, quantity: number}) => sum + item.price * item.quantity,
     0
   );
 
@@ -132,7 +133,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          items: state.items.map((item) => ({
+          items: state.items.map((item: cartItem) => ({
             itemType: item.itemType || "card",
             itemId: item._id,
             quantity: item.quantity,
@@ -507,7 +508,7 @@ export default function CheckoutPage() {
             </h2>
 
             <div className="space-y-4 mb-6 pb-6 border-b max-h-96 overflow-y-auto">
-              {state.items.map((item) => (
+              {state.items.map((item: cartItem) => (
                 <div key={item._id} className="flex justify-between text-sm">
                   <div>
                     <p className="font-medium text-gray-900">

@@ -198,10 +198,10 @@ router.post('/batch-check', async (req, res) => {
       return res.status(400).json({ error: 'Liste de cartes requise' });
     }
 
-    const results = [];
-    let totalCost = 0;
-    let totalFound = 0;
-    let totalAvailable = 0;
+    const results = {
+      found: [],
+      notfound: []
+    };
 
     for (const item of cards) {
       const { name, setCode, cardNumber, quantity } = item;
@@ -219,54 +219,23 @@ router.post('/batch-check', async (req, res) => {
       const card = await Card.findOne(filters);
 
       if (!card) {
-        results.push({
-          name,
-          setCode,
-          cardNumber,
-          found: false,
-          requested: quantity,
-          available: false,
-          message: 'Carte introuvable'
+        results.notfound.push({
+          card: {
+            name,
+            setCode,
+            cardNumber,
+          },
+          requested: quantity
         });
-        continue;
+      } else {
+        results.found.push({
+          card,
+          requested: quantity
+        });
       }
-
-      totalFound++;
-      const isAvailable = card.isAvailable(quantity);
-      const adjustedQuantity = Math.min(quantity, card.stock);
-
-      if (isAvailable) {
-        totalAvailable++;
-        totalCost += card.price * adjustedQuantity;
-      }
-
-      results.push({
-        setCode,
-        cardNumber,
-        found: true,
-        card,
-        requested: quantity,
-        available: isAvailable,
-        adjustedQuantity,
-        stock: card.stock,
-        price: card.price,
-        subtotal: card.price * adjustedQuantity,
-        message: isAvailable
-          ? 'Disponible'
-          : `Stock insuffisant (${card.stock} disponible${card.stock > 1 ? 's' : ''})`
-      });
     }
 
-    res.json({
-      results,
-      summary: {
-        totalRequested: cards.length,
-        totalFound,
-        totalAvailable,
-        totalCost: parseFloat(totalCost.toFixed(2))
-      }
-    });
-
+    res.json({results});
   } catch (error) {
     console.error('Erreur batch check:', error);
     res.status(500).json({ error: error.message });

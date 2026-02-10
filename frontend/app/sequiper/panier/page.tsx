@@ -4,16 +4,17 @@ import { formatPrice } from "../../utils";
 import { useCart } from "../../context/cart-provider";
 import { useEffect } from "react";
 import Link from "next/link";
+import { cartItem } from "@/app/types/card";
 
 export default function PanierPage() {
   const { state, dispatch } = useCart();
-  const total = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const missing = state.items.filter(item => item.stock !== undefined && item.quantity > item.stock);
+  const total = state.items.reduce((sum: number, item: cartItem) => sum + item.price * item.quantity, 0);
+  const missing = state.items.filter((item: cartItem) => item.stock !== undefined && item.quantity > item.stock);
   const isValid = missing.length === 0;
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     // Vérifier si le changement dépasse le stock
-    const item = state.items.find(i => i._id === itemId);
+    const item = state.items.find((i: cartItem) => i._id === itemId);
     if (item && newQuantity > 0) {
       dispatch({ type: "UPDATE_QUANTITY", payload: { id: itemId, quantity: newQuantity } });
     } else if (newQuantity === 0) {
@@ -31,7 +32,7 @@ export default function PanierPage() {
         return;
       }
 
-      const items = state.items.map(item => ({
+      const items = state.items.map((item: cartItem) => ({
         itemType: item.itemType,
         itemId: item._id,
         quantity: item.quantity
@@ -47,8 +48,8 @@ export default function PanierPage() {
 
       const data = await response.json();
 
-      const itemsWithStock = data.stock.map(i => {
-        const cartItem = state.items.find(ci => ci._id === i._id)
+      const itemsWithStock = data.stock.map((i: cartItem) => {
+        const cartItem = state.items.find((ci: cartItem) => ci._id === i._id)
         return {
           ...cartItem,
           stock: i.stock
@@ -57,6 +58,7 @@ export default function PanierPage() {
 
       dispatch({ type: "SET_STOCK", payload: itemsWithStock });
     } catch (err) {
+
     }
   };
 
@@ -74,9 +76,9 @@ export default function PanierPage() {
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div>Stock insuffisant :</div>
             <div className="space-y-2 text-red-600">
-              {missing.map((missingItem) => (
+              {missing.map((missingItem: cartItem) => (
                 <div key={missingItem._id} className="text-sm">
-                  <span className="font-medium">- {missingItem.nameFR ?? missingItem.nameEN}</span>: {missingItem.quantity} demandés / {missingItem.stock > 0 ? missingItem.stock + " en stock" : "stock épuisé" }
+                  <span className="font-medium">- {missingItem.nameFR ?? missingItem.nameEN}</span>: {missingItem.quantity} demandés / {missingItem.stock !== undefined && missingItem.stock > 0 ? missingItem.stock + " en stock" : "stock épuisé" }
                 </div>
               ))}
             </div>
@@ -106,7 +108,7 @@ export default function PanierPage() {
               </div>
 
               <div className="divide-y">
-                {state.items.map((item) => (
+                {state.items.map((item: cartItem) => (
                   <div
                     key={item._id}
                     className="p-6 hover:bg-gray-50 transition-colors"

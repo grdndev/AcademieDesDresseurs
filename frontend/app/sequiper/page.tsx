@@ -32,15 +32,15 @@ export default function SEquiperPage() {
                         <p className="text-blue-100 text-lg mb-8 max-w-md">
                             Collez votre decklist (Limitless/Live) et nous préparons votre panier automatiquement selon nos stocks.
                         </p>
-                        <button className="px-8 py-4 bg-white text-primary rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2">
+                        <Link href="/sequiper/builder" className="w-3xs px-8 py-4 bg-white text-primary text-center rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2">
                             Essayer l&apos;outil
                             <Zap className="w-5 h-5 fill-current" />
-                        </button>
+                        </Link>
                     </div>
                     <div className="w-full md:w-1/3 h-64 bg-white/10 rounded-3xl border border-white/20 backdrop-blur-sm flex items-center justify-center relative z-10">
                         <div className="text-center opacity-50">
                             <Layers className="w-16 h-16 mx-auto mb-4" />
-                            <span className="text-sm">Prévisualisation de l'outil</span>
+                            <span className="text-sm">Prévisualisation de l&apos;outil</span>
                         </div>
                     </div>
                     {/* Flare */}
