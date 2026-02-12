@@ -3,7 +3,7 @@ import { formatPrice } from "../../../utils";
 
 export default async function DetailCartePage({params}: {params: Promise<{id: string}> }) {
     const { id } = await params;
-    const card = await fetch("http://localhost:5001/api/cards/" + id).then(response => response.json())
+    const card = await fetch(process.env.NEXT_PUBLIC_API_URL + "/cards/" + id).then(response => response.json())
     const data = card.card;
 
     return(<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

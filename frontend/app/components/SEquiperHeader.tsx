@@ -1,7 +1,12 @@
-import Link from "next/link";
+"use client";
+
 import { Search, ShoppingCart } from "lucide-react";
+import { useCart } from "../context/cart-provider";
+import Link from "next/link";
 
 export default function SEquiperHeader() {
+    const { state } = useCart();
+
     return (<div className="bg-white border-b border-gray-200 py-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -19,9 +24,10 @@ export default function SEquiperHeader() {
                         />
                     </div>
                     <div>
-                        <Link href="/sequiper/panier" className="flex px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-all sm:max-w-md">
+                        <Link href="/panier" className="flex px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-all sm:max-w-md">
                             <ShoppingCart />
-                            <div className="px-2 text-xl">Panier</div>
+                            <div className="px-1 text-xl">Panier</div>
+                            {!!state.items.length && <div>{state.items.length}</div>}
                         </Link>
                     </div>
                 </div>

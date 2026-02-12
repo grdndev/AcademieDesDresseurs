@@ -15,7 +15,7 @@ const accessorySchema = new mongoose.Schema({
     type: String,
     maxlength: 200
   },
-  
+
   // Catégorie
   category: {
     type: String,
@@ -26,7 +26,7 @@ const accessorySchema = new mongoose.Schema({
     type: String
     // Ex: "Standard", "Premium", "Japanese", "Oversized", etc.
   },
-  
+
   // Prix et stock
   price: {
     type: Number,
@@ -48,7 +48,7 @@ const accessorySchema = new mongoose.Schema({
       return 'available';
     }
   },
-  
+
   // Images
   images: {
     main: {
@@ -58,7 +58,7 @@ const accessorySchema = new mongoose.Schema({
     gallery: [String],
     thumbnail: String
   },
-  
+
   // Spécifications techniques
   specifications: {
     brand: String,
@@ -83,7 +83,7 @@ const accessorySchema = new mongoose.Schema({
     quantity: Number, // Ex: 65 sleeves, 100 sleeves, etc.
     compatibility: [String] // Ex: ["Standard Size", "Pokemon TCG", "Double Sleeving"]
   },
-  
+
   // Personnalisation (pour playmats, deck boxes custom, etc.)
   isCustomizable: {
     type: Boolean,
@@ -107,14 +107,14 @@ const accessorySchema = new mongoose.Schema({
       default: 1
     }
   },
-  
+
   // SEO et recherche
   tags: [String],
   slug: {
     type: String,
     unique: true
   },
-  
+
   // Relations
   relatedProducts: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -124,7 +124,7 @@ const accessorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Deck'
   }],
-  
+
   // Statistiques
   viewCount: {
     type: Number,
@@ -146,13 +146,13 @@ const accessorySchema = new mongoose.Schema({
       default: 0
     }
   },
-  
+
   // Mise en avant
   isFeatured: {
     type: Boolean,
     default: false
   },
-  isNew: {
+  isNewItem: {
     type: Boolean,
     default: false
   },
@@ -160,7 +160,7 @@ const accessorySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
+
   // Timestamps
   createdAt: {
     type: Date,
@@ -198,7 +198,7 @@ accessorySchema.methods.updateStock = async function(quantity, operation = 'subt
   } else if (operation === 'set') {
     this.stock = Math.max(0, quantity);
   }
-  
+
   // Mettre à jour la disponibilité
   if (this.stock === 0) {
     this.availability = 'out-of-stock';
@@ -207,7 +207,7 @@ accessorySchema.methods.updateStock = async function(quantity, operation = 'subt
   } else {
     this.availability = 'available';
   }
-  
+
   await this.save();
   return this.stock;
 };
@@ -221,7 +221,7 @@ accessorySchema.index({ availability: 1 });
 accessorySchema.index({ 'specifications.brand': 1 });
 accessorySchema.index({ isCustomizable: 1 });
 accessorySchema.index({ isFeatured: 1 });
-accessorySchema.index({ isNew: 1 });
+accessorySchema.index({ isNewItem: 1 });
 accessorySchema.index({ 'rating.average': -1 });
 accessorySchema.index({ salesCount: -1 });
 accessorySchema.index({ createdAt: -1 });

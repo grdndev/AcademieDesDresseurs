@@ -18,8 +18,7 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Code du set requis'],
     uppercase: true,
-    trim: true,
-    index: true
+    trim: true
     // Ex: "OBF" pour Obsidian Flames, "PAL" pour Paldea Evolved
   },
   setNameFR: {

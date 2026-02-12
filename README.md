@@ -25,6 +25,17 @@ API robuste pour la gestion des données et des utilisateurs.
 
 ---
 
+## Version Démo (docker compose)
+Récupérer cards.json au préalable.
+S'assurer que le service mongod soit stoppé localement, puis :
+
+```bash
+docker compose up --build -d
+mongoimport --db=express_api_db --collection=cards --file=cards.json
+```
+
+*Note : L'interface est accessible sur `http://localhost:3000`.*
+
 ## 🛠️ Installation et Lancement
 
 ### 1. Prérequis

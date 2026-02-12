@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useCart } from "@/app/context/cart-provider";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { formatPrice } from "../../../utils";
@@ -45,6 +46,7 @@ interface Order {
 }
 
 export default function PaymentPage() {
+  const { dispatch } = useCart();
   const params = useParams();
   const orderId = params.orderId as string;
 
@@ -60,7 +62,7 @@ export default function PaymentPage() {
 
   const fetchOrder = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/orders/${orderId}`);
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + `/orders/${orderId}`);
       if (!response.ok) {
         throw new Error("Commande introuvable");
       }
@@ -85,7 +87,7 @@ export default function PaymentPage() {
       // Simulation d'un appel à Stripe ou autre service de paiement
       // Pour l'instant, on simule un paiement réussi
 
-      const response = await fetch(`http://localhost:5001/api/payment/confirm`, {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/payment/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,6 +107,7 @@ export default function PaymentPage() {
           status: "completed",
         },
       });
+      dispatch({type: "CLEAR_CART"});
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erreur lors du paiement"
@@ -142,13 +145,12 @@ export default function PaymentPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
+      <div className="mb-8 md:px-30">
         <h1 className="text-4xl font-bold text-[#004A99] mb-2">Paiement</h1>
         <div className="h-1 w-24 bg-[#E1BC2E]"></div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+      <div className="md:px-30">
           {paymentCompleted ? (
             <div className="bg-green-50 border-2 border-green-200 rounded-lg p-8 text-center">
               <div className="text-6xl mb-4">✓</div>
@@ -303,14 +305,13 @@ export default function PaymentPage() {
               </button>
 
               <Link
-                href="/sequiper/panier"
+                href="/panier"
                 className="block text-center text-[#004A99] hover:text-[#25476E] font-semibold py-2 transition-colors"
               >
                 Retour au panier
               </Link>
             </div>
           )}
-        </div>
       </div>
     </main>
   );

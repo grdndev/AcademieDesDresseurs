@@ -43,10 +43,13 @@ export default function CheckoutPage() {
     promocode: "",
   });
 
-  const total = state.items.reduce(
+  const subtotal = state.items.reduce(
     (sum: number, item: {price: number, quantity: number}) => sum + item.price * item.quantity,
     0
   );
+  const shipping = subtotal < 50 ? 4.99 : subtotal < 100 ? 2.99 : 0;
+  const taxes = (subtotal + shipping) * 0.2;
+  const total = subtotal + shipping + taxes;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -127,7 +130,7 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5001/api/orders", {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -175,7 +178,7 @@ export default function CheckoutPage() {
       }
 
       const data = await response.json();
-      router.push(`/sequiper/payment/${data.orderId}`);
+      router.push(`/panier/paiement/${data.orderId}`);
     } catch (err) {
       console.error("Erreur:", err);
       setError(
@@ -483,7 +486,7 @@ export default function CheckoutPage() {
             {/* Boutons */}
             <div className="flex gap-4">
               <Link
-                href="/sequiper/panier"
+                href="/panier"
                 className="flex-1 text-center bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-lg transition-colors"
               >
                 Retour au panier
@@ -507,14 +510,13 @@ export default function CheckoutPage() {
               Résumé de votre commande
             </h2>
 
-            <div className="space-y-4 mb-6 pb-6 border-b max-h-96 overflow-y-auto">
+            <div className="space-y-1 mb-6 pb-6 border-b max-h-96 overflow-y-auto">
               {state.items.map((item: cartItem) => (
                 <div key={item._id} className="flex justify-between text-sm">
                   <div>
                     <p className="font-medium text-gray-900">
-                      {item.nameFR ?? item.nameEN}
+                      {item.nameFR ?? item.nameEN} <span className="text-gray-500">x{item.quantity}</span>
                     </p>
-                    <p className="text-gray-500">x{item.quantity}</p>
                   </div>
                   <p className="font-medium text-gray-900">
                     {formatPrice(item.price * item.quantity)}€
@@ -526,11 +528,18 @@ export default function CheckoutPage() {
             <div className="space-y-4 mb-6 pb-6 border-b">
               <div className="flex justify-between text-gray-700">
                 <span>Sous-total:</span>
-                <span>{formatPrice(total)}€</span>
+                <span>{formatPrice(subtotal)}€</span>
               </div>
               <div className="flex justify-between text-gray-700">
                 <span>Frais de port:</span>
-                <span className="text-green-600 font-semibold">Gratuit</span>
+                  { shipping > 0 ?
+                    <span className="font-semibold">{formatPrice(shipping)}€</span>
+                  : <span className="text-green-600 font-semibold">Gratuit</span>
+                  }
+              </div>
+              <div className="flex justify-between text-gray-700">
+                <span>TVA 20%:</span>
+                <span>{formatPrice(taxes)}€</span>
               </div>
             </div>
 

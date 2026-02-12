@@ -1,14 +1,18 @@
 "use client";
 
 import { formatPrice } from "../utils";
-import { Plus } from "lucide-react";
 import { useCart } from "@/app/context/cart-provider";
 import Image from "next/image";
 import Link from "next/link";
 import { card } from "../types/card";
+import AddToCartButton from "./AddToCartButton";
 
 export default function Card({data}: {data: card}) {
     const { dispatch } = useCart();
+
+    function addToCart() {
+        dispatch({ type: "ADD_ITEM", payload: { ...data, itemType: 'card', quantity: 1 } });
+    }
 
     return (
         <div className="w-[15em] mx-6 my-4 relative">
@@ -30,11 +34,9 @@ export default function Card({data}: {data: card}) {
                     </span>
                 </div>
             </div>
-            <button className="absolute -top-3 -right-3 flex items-center gap-1 rounded-full bg-white border border-gray-200 px-3 py-1 text-sm shadow-md hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 cursor-pointer"
-                onClick={() => dispatch({ type: "ADD_ITEM", payload: { ...data, itemType: 'card', quantity: 1 } })} >
-                <span>Ajouter</span>
-                <Plus className="w-4 h-4" />
-            </button>
+            <div className="absolute -top-3 -right-3">
+                <AddToCartButton addToCart={addToCart} />
+            </div>
         </div>
     )
 }

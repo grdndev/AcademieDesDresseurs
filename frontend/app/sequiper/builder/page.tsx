@@ -1,17 +1,18 @@
 'use client';
+
 import { card } from "@/app/types/card";
 import { formatPrice } from "../../utils";
-import { Plus } from "lucide-react";
 import { useCart } from "@/app/context/cart-provider";
 import { useState } from "react";
 import RequestedCardSmall from "@/app/components/RequestedCardSmall";
+import AddToCartButton from "@/app/components/AddToCartButton";
 
 export default function BuilderPage() {
     const { dispatch } = useCart();
     const [loading, setLoading] = useState(false);
     const [cards, setCards] = useState({results: {found: [], notfound: []}});
-    const available = cards.results.found.filter((c: {card: card, requested: number}) => c.requested <= c.card?.stock);
-    const unavailable = cards.results.found.filter((c: {card: card, requested: number}) => c.requested > c.card?.stock);
+    const available: {card: card, requested: number}[] = cards.results.found.filter((c: {card: card, requested: number}) => c.requested <= c.card?.stock);
+    const unavailable: {card: card, requested: number}[] = cards.results.found.filter((c: {card: card, requested: number}) => c.requested > c.card?.stock);
     const total = available.reduce((sum, item: {card: card, requested: number}) => sum + (item.card.price * item.requested), 0)
                 + unavailable.reduce((sum, item: {card: card, requested: number}) => sum + (item.card.price * item.card.stock), 0);
 
@@ -31,7 +32,7 @@ export default function BuilderPage() {
         }
 
         try {
-            const response = await fetch("http://localhost:5001/api/cards/batch-check", {
+            const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/cards/batch-check", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -42,10 +43,22 @@ export default function BuilderPage() {
             const data = await response.json();
             setCards(data);
         } catch (err) {
-
+            throw new Error("Erreur serveur");
         } finally {
             setLoading(false);
         }
+    }
+
+    function addToCart() {
+        const payload: object[] = [];
+        for (const i of available) {
+            payload.push({...i.card, quantity: i.requested});
+        }
+        for (const j of unavailable) {
+            payload.push({...j.card, quantity: j.card.stock});
+        }
+
+        dispatch({ type: "ADD_DECKLIST", payload })
     }
 
     return (<main className="flex flex-col max-w-7xl mx-auto p-4 sm:px-6 lg:px-8 bg-gray-50 border border-gray-200 md:flex-row">
@@ -59,11 +72,7 @@ export default function BuilderPage() {
                         <div className="flex flex-col justify-between">
                             <div className="text-right px-3"><span className="font-bold">Coût total</span>{!!unavailable.length && <span className="text-red-500"> (achat partiel)</span>} : {formatPrice(total)} €</div>
                             <div className="flex justify-end">
-                                <button className="flex items-center gap-1 rounded-full bg-white border border-gray-200 px-3 py-1 text-sm shadow-md hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 cursor-pointer"
-                                    onClick={() => dispatch({ type: "ADD_ITEM", payload: { } })} >
-                                    <span>Ajouter au Panier</span>
-                                    <Plus className="w-4 h-4" />
-                                </button>
+                                <AddToCartButton addToCart={addToCart} />
                             </div>
                         </div>
                     </div>

@@ -9,6 +9,7 @@ type CartState = {
 
 type Action =
   | { type: "ADD_ITEM"; payload: cartItem }
+  | { type: "ADD_DECKLIST"; payload: cartItem[] }
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "SET_STOCK"; payload: cartItem[] }
@@ -36,7 +37,23 @@ function cartReducer(state: CartState, action: Action): CartState {
         items: [...state.items, { ...action.payload, quantity: 1 }],
       };
     }
+    case "ADD_DECKLIST": {
+      const newStateItems = [];
 
+      for(const item of action.payload) {
+        const existing = state.items.find(i => i._id === item._id);
+
+        if (existing) {
+          newStateItems.push({...existing, quantity: parseInt(existing.quantity.toString()) + parseInt(item.quantity.toString())})
+        } else {
+          newStateItems.push(item);
+        }
+      }
+
+      return {
+        items: newStateItems
+      };
+    }
     case "REMOVE_ITEM":
       return {
         items: state.items.filter(i => i._id !== action.payload),

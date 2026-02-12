@@ -1,16 +1,19 @@
 "use client";
 
-import { formatPrice } from "../../utils";
-import { useCart } from "../../context/cart-provider";
+import { formatPrice } from "../utils";
+import { useCart } from "../context/cart-provider";
 import { useEffect } from "react";
 import Link from "next/link";
 import { cartItem } from "@/app/types/card";
 
 export default function PanierPage() {
   const { state, dispatch } = useCart();
-  const total = state.items.reduce((sum: number, item: cartItem) => sum + item.price * item.quantity, 0);
+  const subtotal = state.items.reduce((sum: number, item: cartItem) => sum + item.price * item.quantity, 0);
   const missing = state.items.filter((item: cartItem) => item.stock !== undefined && item.quantity > item.stock);
   const isValid = missing.length === 0;
+  const shipping = subtotal < 50 ? 4.99 : subtotal < 100 ? 2.99 : 0;
+  const taxes = (subtotal + shipping) * 0.2;
+  const total = subtotal + shipping + taxes;
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     // Vérifier si le changement dépasse le stock
@@ -38,7 +41,7 @@ export default function PanierPage() {
         quantity: item.quantity
       }));
 
-      const response = await fetch("http://localhost:5001/api/orders/check-cart", {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/orders/check-cart", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -189,11 +192,18 @@ export default function PanierPage() {
               <div className="space-y-4 mb-6 pb-6 border-b">
                 <div className="flex justify-between text-gray-700">
                   <span>Sous-total:</span>
-                  <span>{formatPrice(total)}€</span>
+                  <span>{formatPrice(subtotal)}€</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span>Frais de port:</span>
-                  <span className="text-green-600 font-semibold">Gratuit</span>
+                  { shipping > 0 ?
+                    <span className="font-semibold">{formatPrice(shipping)}€</span>
+                  : <span className="text-green-600 font-semibold">Gratuit</span>
+                  }
+                </div>
+                <div className="flex justify-between text-gray-700">
+                  <span>TVA 20%:</span>
+                  <span>{formatPrice(taxes)}€</span>
                 </div>
               </div>
 
@@ -203,7 +213,7 @@ export default function PanierPage() {
               </div>
 
               {isValid ? <Link
-                href="/sequiper/checkout"
+                href="/panier/checkout"
                 className="block text-center w-full bg-[#E1BC2E] hover:bg-[#d4b620] text-[#004A99] font-bold py-3 px-4 rounded-lg transition-colors mb-3"
               >
                 Commander
@@ -217,15 +227,6 @@ export default function PanierPage() {
               >
                 Continuer les achats
               </Link>
-
-              <div className="mt-6 p-4 bg-blue-50 rounded border border-[#689BBC]">
-                <p className="text-sm text-gray-600">
-                  ✓ Livraison sécurisée
-                </p>
-                <p className="text-sm text-gray-600">
-                  ✓ Paiement sécurisé
-                </p>
-              </div>
             </div>
           </div>
         </div>
