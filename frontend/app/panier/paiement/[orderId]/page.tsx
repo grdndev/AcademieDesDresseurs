@@ -62,7 +62,7 @@ export default function PaymentPage() {
 
   const fetchOrder = async () => {
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + `/orders/${orderId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
       if (!response.ok) {
         throw new Error("Commande introuvable");
       }
@@ -87,7 +87,7 @@ export default function PaymentPage() {
       // Simulation d'un appel à Stripe ou autre service de paiement
       // Pour l'instant, on simule un paiement réussi
 
-      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/payment/confirm", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/confirm`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -41,7 +41,7 @@ export default function PanierPage() {
         quantity: item.quantity
       }));
 
-      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/orders/check-cart", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/check-cart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -4,7 +4,7 @@ import { use } from "react";
 import Card from "@/app/components/Card";
 
 export default function CartesPage() {
-    const data = use(fetch(process.env.NEXT_LOCAL_API_URL + "/cards?sortBy=name", {cache: 'no-store'})
+    const data = use(fetch(`${process.env.NEXT_LOCAL_API_URL}/cards?sortBy=name`, {cache: 'no-store'})
                 .then(res => {
                     if (!res.ok) throw new Error("Erreur serveur");
                     return res.json();
