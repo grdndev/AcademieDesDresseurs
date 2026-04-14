@@ -2,9 +2,10 @@ import { card } from "@/app/types/card";
 import { Suspense } from "react";
 import { use } from "react";
 import Card from "@/app/components/Card";
+import getApiBase from "@/app/lib/api";
 
 export default function CartesPage() {
-    const data = use(fetch(`${process.env.NEXT_LOCAL_API_URL}/cards?sortBy=name`, {cache: 'no-store'})
+    const data = use(fetch(`${getApiBase()}/cards?sortBy=name`, {cache: 'no-store'})
                 .then(res => {
                     if (!res.ok) throw new Error("Erreur serveur");
                     return res.json();

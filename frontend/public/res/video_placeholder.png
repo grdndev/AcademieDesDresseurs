@@ -1,0 +1,7 @@
+<Image
+  src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop"
+  alt="Vidéo de présentation"
+  width={1280}
+  height={720}
+  className="w-full"
+/>

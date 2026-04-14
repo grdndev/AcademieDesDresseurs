@@ -12,6 +12,11 @@ const paymentRoutes = require('./routes/payment');
 
 const app = express();
 
+// Proxy support (important behind OVH reverse proxy)
+if (String(process.env.TRUST_PROXY).toLowerCase() === 'true') {
+  app.set('trust proxy', 1);
+}
+
 // Middleware
 app.use((req, res, next) => {
   // STRIPE : exclusion pour obtenir le rawbody
@@ -23,11 +28,36 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true }));
 
-// CORS (à configurer selon vos besoins)
+// CORS (configurable via CORS_ORIGINS env, comma-separated)
+const allowedOrigins = (process.env.CORS_ORIGINS || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const requestOrigin = req.headers.origin;
+  const allowAll = allowedOrigins.includes('*');
+  const isAllowedOrigin = requestOrigin && allowedOrigins.includes(requestOrigin);
+
+  if (allowAll) {
+    res.header('Access-Control-Allow-Origin', '*');
+  } else if (isAllowedOrigin) {
+    res.header('Access-Control-Allow-Origin', requestOrigin);
+    res.header('Vary', 'Origin');
+  }
+
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+
+  // Credentials are only safe with explicit origins (not with *)
+  if (!allowAll && isAllowedOrigin) {
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
+  if (!allowAll && requestOrigin && !isAllowedOrigin) {
+    return res.status(403).json({ error: 'Origin not allowed by CORS policy' });
+  }
+
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }

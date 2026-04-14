@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "../../context/cart-provider";
 import { formatPrice } from "../../utils";
+import getApiBase from "@/app/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cartItem } from "@/app/types/card";
@@ -130,7 +131,7 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+  const response = await fetch(`${getApiBase()}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

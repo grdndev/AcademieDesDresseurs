@@ -1,4 +1,5 @@
 import Navbar from "../components/Navbar";
+import Link from "next/link";
 import { Users, GraduationCap, DollarSign, ShieldCheck, ArrowRight } from "lucide-react";
 
 export default function ProfesseurPage() {
@@ -23,9 +24,9 @@ export default function ProfesseurPage() {
                         <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12">
                             L'Académie recrute ses futurs professeurs. Profitez d'un cadre structuré pour coacher, créer des guides et animer des cours.
                         </p>
-                        <button className="px-10 py-5 bg-primary text-white rounded-2xl font-black text-lg shadow-2xl hover:scale-105 transition-transform">
+                        <Link href="/contact" className="inline-block px-10 py-5 bg-primary text-white rounded-2xl font-black text-lg shadow-2xl hover:scale-105 transition-transform text-center">
                             Déposer ma candidature
-                        </button>
+                        </Link>
                     </div>
                     <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2"></div>
                 </section>
@@ -50,7 +51,7 @@ export default function ProfesseurPage() {
                 </section>
 
                 {/* Requirements / FAQ mini */}
-                <section className="bg-gray-50 py-24">
+                <section id="processus" className="bg-gray-50 py-24">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 bg-white p-12 rounded-[40px] shadow-sm border border-gray-100">
                         <h2 className="text-3xl font-black mb-10 text-center">Processus de sélection</h2>
                         <div className="space-y-8">
@@ -67,9 +68,9 @@ export default function ProfesseurPage() {
                             ))}
                         </div>
                         <div className="mt-12 text-center">
-                            <button className="flex items-center gap-2 mx-auto text-primary font-bold hover:underline">
+                            <Link href="/professeur#processus" className="flex items-center gap-2 mx-auto text-primary font-bold hover:underline">
                                 Consulter la FAQ complète <ArrowRight className="w-4 h-4" />
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </section>

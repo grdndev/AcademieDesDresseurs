@@ -80,3 +80,29 @@ Pour un suivi détaillé des tâches et de la roadmap, consultez :
 
 ## 📄 Licence
 Propriété exclusive de l'Académie des Dresseurs.
+
+## ☁️ Déploiement OVH
+
+Un guide de déploiement API-first est disponible ici :
+`DEPLOY_OVH.md`
+
+## 🔎 Smoke tests
+Pour vérifier rapidement la connectivité entre le frontend et le backend vous pouvez utiliser ces commandes.
+
+Depuis l'hôte (vérifie l'API exposée sur localhost:5001) :
+
+```bash
+node scripts/smoke-test.js --mode=host
+# ou une requête curl individuelle
+curl http://localhost:5001/health
+curl http://localhost:5001/api/cards
+```
+
+Depuis le conteneur frontend (vérifie la connexion interne via le hostname `api:5001`) :
+
+```bash
+docker compose exec frontend \
+  sh -c "curl -sS http://api:5001/health && echo && curl -sS http://api:5001/api/cards"
+```
+
+J'ai ajouté `scripts/smoke-test.js` (mode host) et un petit wrapper pour exécuter des vérifications rapides depuis le conteneur. Ces tests retournent les codes HTTP et un extrait des réponses JSON.

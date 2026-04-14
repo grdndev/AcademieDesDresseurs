@@ -1,6 +1,7 @@
 "use client";
 
 import { formatPrice } from "../utils";
+import getApiBase from "@/app/lib/api";
 import { useCart } from "../context/cart-provider";
 import { useEffect } from "react";
 import Link from "next/link";
@@ -41,7 +42,7 @@ export default function PanierPage() {
         quantity: item.quantity
       }));
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/check-cart`, {
+  const response = await fetch(`${getApiBase()}/orders/check-cart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

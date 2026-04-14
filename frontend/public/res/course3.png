@@ -1,0 +1,7 @@
+<Image
+  src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1974&auto=format&fit=crop"
+  alt="Devenir un pro du deckbuilding"
+  width={400}
+  height={225}
+  className="w-full"
+/>

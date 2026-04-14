@@ -1,0 +1,7 @@
+<Image
+  src="https://i.pravatar.cc/48?u=remi"
+  alt="Avatar de Rémi"
+  width={48}
+  height={48}
+  className="rounded-full"
+/>

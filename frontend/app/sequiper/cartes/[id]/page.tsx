@@ -1,9 +1,10 @@
 import Image from "next/image";
 import { formatPrice } from "../../../utils";
+import getApiBase from "@/app/lib/api";
 
 export default async function DetailCartePage({params}: {params: Promise<{id: string}> }) {
     const { id } = await params;
-    const card = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cards/${id}`).then(response => response.json())
+    const card = await fetch(`${getApiBase()}/cards/${id}`).then(response => response.json())
     const data = card.card;
 
     return(<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

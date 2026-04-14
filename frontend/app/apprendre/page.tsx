@@ -2,7 +2,7 @@ import Navbar from "../components/Navbar";
 import { PlayCircle, BookOpen, Clock, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-export default function ApprendrePage() {
+export default function ApprendrePage({ searchParams }: { searchParams?: { variant?: string } }) {
     const categories = ["Débutant", "Intermédiaire", "Expert", "Parents"];
 
     const courses = [
@@ -10,6 +10,9 @@ export default function ApprendrePage() {
         { title: "Analyse de la Méta OBF", type: "Guide PDF", duration: "25 pages", level: "Expert", price: "9.99€", icon: BookOpen },
         { title: "Gestion des Ressources", type: "Replay", duration: "45min", level: "Intermédiaire", price: "14.99€", icon: PlayCircle },
     ];
+
+    const variant = searchParams?.variant
+    const highlightIndex = variant === '2' ? 1 : -1
 
     return (
         <div className="min-h-screen bg-white font-outfit">
@@ -19,7 +22,11 @@ export default function ApprendrePage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
                     <div className="max-w-2xl">
                         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">
-                            Apprenez les <span className="text-primary italic">Secrets du Jeu</span>
+                            {variant === '2' ? (
+                                <>Apprendre — <span className="text-primary italic">Hub</span></>
+                            ) : (
+                                <>Apprenez les <span className="text-primary italic">Secrets du Jeu</span></>
+                            )}
                         </h1>
                         <p className="text-xl text-slate-500">
                             Des cours structurés pour comprendre chaque mécanique, des bases aux stratégies de tournoi.
@@ -37,7 +44,7 @@ export default function ApprendrePage() {
                 {/* Course Grid */}
                 <div className="grid md:grid-cols-3 gap-8 mb-20">
                     {courses.map((course, idx) => (
-                        <div key={idx} className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50 overflow-hidden flex flex-col group">
+                        <div key={idx} className={"rounded-3xl border overflow-hidden flex flex-col group " + (idx === highlightIndex ? "bg-gradient-to-r from-yellow-50 via-white to-white border-yellow-200 shadow-[0_10px_30px_rgba(255,211,92,0.12)]" : "bg-white border-gray-100 shadow-xl shadow-slate-200/50")}>
                             <div className="h-48 bg-slate-100 relative items-center justify-center flex overflow-hidden">
                                 <course.icon className="w-16 h-16 text-slate-300 group-hover:scale-110 transition-transform duration-500" />
                                 <div className="absolute top-4 left-4">

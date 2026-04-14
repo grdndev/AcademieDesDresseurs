@@ -1,0 +1,7 @@
+<Image
+  src="https://i.pravatar.cc/48?u=julien"
+  alt="Avatar de Julien"
+  width={48}
+  height={48}
+  className="rounded-full"
+/>

@@ -5,6 +5,7 @@ import { useCart } from "@/app/context/cart-provider";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { formatPrice } from "../../../utils";
+import getApiBase from "@/app/lib/api";
 
 interface OrderItem {
   _id: string;
@@ -62,7 +63,7 @@ export default function PaymentPage() {
 
   const fetchOrder = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
+  const response = await fetch(`${getApiBase()}/orders/${orderId}`);
       if (!response.ok) {
         throw new Error("Commande introuvable");
       }
@@ -87,7 +88,7 @@ export default function PaymentPage() {
       // Simulation d'un appel à Stripe ou autre service de paiement
       // Pour l'instant, on simule un paiement réussi
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payment/confirm`, {
+  const response = await fetch(`${getApiBase()}/payment/confirm`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -198,7 +199,7 @@ export default function PaymentPage() {
                   Continuer les achats
                 </Link>
                 <Link
-                  href="/sequiper"
+                  href="/"
                   className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-lg transition-colors"
                 >
                   Aller à l&apos;accueil

@@ -50,10 +50,10 @@ export default function SEquiperPage() {
                 {/* Filters & Grid Placeholders */}
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-black">Nouveautés</h2>
-                    <button className="flex items-center gap-2 text-primary font-bold">
+                    <Link href="/sequiper/cartes" className="flex items-center gap-2 text-primary font-bold hover:underline">
                         <Filter className="w-5 h-5" />
-                        Filtres
-                    </button>
+                        Voir le catalogue
+                    </Link>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

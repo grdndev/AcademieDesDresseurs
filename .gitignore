@@ -17,3 +17,7 @@ package-lock.json
 # IDE
 .vscode/
 .idea/
+
+# Fichiers trop lourds / références locales
+*.pdf
+frontend/assets/references/

@@ -1,5 +1,4 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
 const Order = require('../models/Order');
 const Card = require('../models/Card');
@@ -8,6 +7,12 @@ const Accessory = require('../models/Accessory');
 const User = require('../models/User');
 const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { getModel } = require('../utils.js');
+
+// Stripe is optional at boot-time (staging/prod can start without keys yet).
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+}
 
 // ==================== STRIPE ====================
 
@@ -89,8 +94,25 @@ router.post('/confirm', optionalAuth, async (req, res) => {
       return res.status(404).json({ error: 'Commande introuvable' });
     }
 
+    // Idempotence: ne pas retraiter un paiement déjà confirmé
+    if (order.payment?.status === 'completed') {
+      return res.json({
+        message: 'Paiement déjà confirmé',
+        order: {
+          orderNumber: order.orderNumber,
+          status: order.status,
+          total: order.pricing.total
+        }
+      });
+    }
+
+    // Déduire le stock uniquement si la commande n'a pas déjà été verrouillée
+    // (le lock via create-intent a déjà décrémenté le stock).
+    if (order.status !== 'locked') {
+      await order.unstock();
+    }
+
     // Marquer la commande comme payée + envoi du mail
-    await order.unstock();
     await order.markAsPaid(paymentIntentId);
 
     // Mettre à jour les stats de l'utilisateur si connecté
@@ -119,6 +141,12 @@ router.post('/confirm', optionalAuth, async (req, res) => {
 // POST /api/payment/webhook - Webhook Stripe
 router.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   try {
+    if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+      return res.status(503).json({
+        error: 'Stripe webhook indisponible: configuration Stripe manquante'
+      });
+    }
+
     let paymentIntent;
     const sig = req.headers['stripe-signature'];
 

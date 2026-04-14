@@ -6,6 +6,7 @@ import { useCart } from "@/app/context/cart-provider";
 import { useState } from "react";
 import RequestedCardSmall from "@/app/components/RequestedCardSmall";
 import AddToCartButton from "@/app/components/AddToCartButton";
+import getApiBase from "@/app/lib/api";
 
 export default function BuilderPage() {
     const { dispatch } = useCart();
@@ -32,7 +33,7 @@ export default function BuilderPage() {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cards/batch-check`, {
+            const response = await fetch(`${getApiBase()}/cards/batch-check`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
