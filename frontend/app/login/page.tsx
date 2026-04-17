@@ -1,16 +1,23 @@
 "use client"
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation'
 import { GraduationCap, Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
     const router = useRouter()
+    const [email, setEmail] = useState("")
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        // Placeholder: redirect to shop after login
-        router.push('/sequiper')
+        const role = email.includes("prof") ? "professeur" : "joueur";
+        localStorage.setItem("mock_user", JSON.stringify({
+            name: email.split("@")[0],
+            email,
+            role,
+        }));
+        router.push(role === "professeur" ? "/espace-professeur" : "/espace-joueur");
     }
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -35,6 +42,8 @@ export default function LoginPage() {
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
                                     placeholder="nom@exemple.com"
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
                                 />

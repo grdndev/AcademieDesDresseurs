@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -9,26 +9,86 @@ const attachmentImg = "/res/attachment-Photoroom 1.png";
 const vector1Img = "/res/Vector_1.png";
 const vector2Img = "/res/Vector_2.png";
 
-const pageTitles: { [key: string]: { title: string; subtitle: string } } = {
+interface PageInfo {
+    title: string;
+    subtitle: string;
+    breadcrumb?: string[];
+    ctas?: { label: string; href: string; variant: "yellow" | "blue" }[];
+}
+
+const pageTitles: { [key: string]: PageInfo } = {
     "/apprendre": {
-        title: "Formations",
-        subtitle: "Développez vos compétences et devenez un Dresseur d'élite.",
+        title: "Apprendre le Pokémon TCG, étape par étape",
+        subtitle: "Des formations pour tous les niveaux, de débutant à champion.",
+        breadcrumb: ["Accueil", "Apprendre"],
+    },
+    "/progresser/coaching": {
+        title: "Coaching individuel",
+        subtitle: "Bénéficiez d'un accompagnement personnalisé avec nos coachs certifiés.",
+        breadcrumb: ["Accueil", "Progresser", "Coaching individuel"],
+    },
+    "/progresser/ateliers": {
+        title: "Ateliers deck building",
+        subtitle: "Construisez et optimisez vos decks avec l'aide d'experts.",
+        breadcrumb: ["Accueil", "Progresser", "Ateliers"],
+    },
+    "/progresser/tournois": {
+        title: "Préparation aux tournois",
+        subtitle: "Un accompagnement stratégique pour performer en compétition.",
+        breadcrumb: ["Accueil", "Progresser", "Tournois"],
     },
     "/progresser": {
-        title: "Progresser",
-        subtitle: "Trouvez un coach et atteignez vos objectifs.",
+        title: "Coaching personnalisé et accompagnement compétitif",
+        subtitle: "Atteignez vos objectifs avec les meilleurs entraîneurs.",
+        breadcrumb: ["Accueil", "Progresser"],
+        ctas: [
+            { label: "Réserver un coaching", href: "/progresser/coaching", variant: "yellow" },
+            { label: "Découvrir les ateliers", href: "/progresser/ateliers", variant: "blue" },
+        ],
+    },
+    "/apprendre/cours/venir": {
+        title: "Cours à venir",
+        subtitle: "Retrouvez tous les prochains cours et réservez votre place.",
+        breadcrumb: ["Accueil", "Apprendre", "Cours à venir"],
+    },
+    "/apprendre/cours/revoir": {
+        title: "Cours à revoir",
+        subtitle: "Revisionnez les sessions passées à votre rythme.",
+        breadcrumb: ["Accueil", "Apprendre", "Cours à revoir"],
+    },
+    "/apprendre/cours": {
+        title: "Tous les cours",
+        subtitle: "Explorez l'ensemble de notre catalogue de formations.",
+        breadcrumb: ["Accueil", "Apprendre", "Cours"],
+    },
+    "/apprendre/guides": {
+        title: "Guides stratégiques",
+        subtitle: "Analyses approfondies rédigées par nos experts compétitifs.",
+        breadcrumb: ["Accueil", "Apprendre", "Guides"],
     },
     "/sequiper": {
         title: "S'équiper",
-        subtitle: "Trouvez les meilleures cartes et accessoires.",
+        subtitle: "Trouvez les meilleures cartes, decks et accessoires.",
+        breadcrumb: ["Accueil", "S'équiper"],
+    },
+    "/professeur/candidature": {
+        title: "Candidature Professeur",
+        subtitle: "Rejoignez l'Académie et partagez votre expertise avec la communauté.",
+        breadcrumb: ["Accueil", "Devenir Professeur", "Candidature"],
     },
     "/professeur": {
-        title: "Devenir Professeur",
-        subtitle: "Partagez votre savoir et rejoignez notre équipe.",
+        title: "Partagez votre expertise Pokémon TCG.",
+        subtitle: "Rejoignez l'Académie des Dresseurs et enseignez aux joueurs de demain.",
+        breadcrumb: ["Accueil", "Devenir Professeur"],
+        ctas: [
+            { label: "Postuler maintenant", href: "/professeur#candidature", variant: "yellow" },
+            { label: "En savoir plus", href: "/professeur#avantages", variant: "blue" },
+        ],
     },
     "/wallet": {
         title: "Mon Portefeuille",
         subtitle: "Gérez vos fonds et consultez l'historique de vos transactions.",
+        breadcrumb: ["Accueil", "Mon Portefeuille"],
     },
     "/login": {
         title: "Connexion",
@@ -38,111 +98,148 @@ const pageTitles: { [key: string]: { title: string; subtitle: string } } = {
         title: "Inscription",
         subtitle: "Rejoignez la plus grande communauté de Dresseurs.",
     },
+    "/panier": {
+        title: "Votre panier",
+        subtitle: "Vérifiez vos articles avant de finaliser votre commande.",
+        breadcrumb: ["Accueil", "Panier"],
+    },
+    "/contact": {
+        title: "Contact",
+        subtitle: "Une question ? Notre équipe vous répond rapidement.",
+        breadcrumb: ["Accueil", "Contact"],
+    },
 };
+
+const navLinks = [
+    { name: "Accueil", href: "/" },
+    { name: "Apprendre", href: "/apprendre" },
+    { name: "Progresser", href: "/progresser" },
+    { name: "S'équiper", href: "/sequiper" },
+    { name: "Devenir Professeur", href: "/professeur" },
+];
 
 export default function Navbar() {
     const pathname = usePathname();
     const isHome = pathname === "/";
     const pageInfo = Object.entries(pageTitles).find(([path]) => pathname.startsWith(path))?.[1];
 
-    const navLinks = [
-        { name: "Accueil", href: "/" },
-        { name: "Apprendre", href: "/apprendre" },
-        { name: "Progresser", href: "/progresser" },
-        { name: "S'équiper", href: "/sequiper" },
-        { name: "Devenir Professeur", href: "/professeur" },
-    ];
-
     const isActiveLink = (href: string) => pathname === href;
 
+    const [user, setUser] = useState<{ name: string; role: string } | null>(null);
+    useEffect(() => {
+        const raw = localStorage.getItem("mock_user");
+        if (raw) setUser(JSON.parse(raw));
+    }, []);
+
+    // ── HOME ──────────────────────────────────────────────────────────────────
     if (isHome) {
         return (
-            <header className="relative w-full h-[794px] bg-[#6096BA] overflow-hidden text-white font-['Inter']">
-                {/* Decorative vectors - responsive: hide on small screens and scale responsibly */}
-            <Image
-                src={vector1Img}
-                alt=""
-                aria-hidden
-                className="hidden md:block absolute -top-2 -left-2 w-55 md:w-120 lg:w-217 h-auto"
-                style={{ transform: 'rotate(0.32deg)' }}
-                unoptimized
-                priority
-            />
-            <Image
-                src={vector2Img}
-                alt=""
-                aria-hidden
-                className="hidden lg:block absolute top-[443px] left-[1090px] w-[400px] lg:w-[868px] h-auto object-contain"
-                // Prevent any transform/scale from applying to this decorative vector
-                style={{ transform: 'none', objectFit: 'contain' }}
-                unoptimized
-                priority
-            />
+            <header className="relative w-full h-[794px] bg-[#6096BA] overflow-hidden text-white">
+                {/* Decorative vectors */}
                 <Image
-                    src={attachmentImg}
-                    alt=""
-                    aria-hidden
-                    className="hidden lg:block absolute top-[265px] left-[1167px] w-[280px] lg:w-[562px] h-auto object-contain"
-                    unoptimized
-                    priority
+                    width={872} height={711}
+                    src={vector1Img} alt="" aria-hidden
+                    className="absolute -top-2 -left-2 w-[340px] md:w-[540px] lg:w-[872px] h-auto opacity-80"
+                    style={{ transform: "rotate(0.32deg)" }}
+                    unoptimized priority
+                />
+                <Image
+                    width={873} height={969}
+                    src={vector2Img} alt="" aria-hidden
+                    className="hidden lg:block absolute top-[443px] left-[1090px] w-[868px] h-auto"
+                    unoptimized priority
+                />
+                <Image
+                    width={562} height={457}
+                    src={attachmentImg} alt="" aria-hidden
+                    className="hidden lg:block absolute top-[265px] left-[1167px] w-[562px] h-auto"
+                    unoptimized priority
                 />
 
                 {/* Navigation */}
-                <nav className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-4 md:px-[100px] py-4 h-[140px]">
+                <nav className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-6 md:px-[100px] h-[140px]">
                     <Link href="/" className="flex-shrink-0">
-                        <Image
-                            src={logoImg}
-                            alt="Académie des Dresseurs"
-                            width={84}
-                            height={81}
-                            className="rounded-lg"
-                            priority
-                        />
+                        <Image src={logoImg} alt="Académie des Dresseurs" width={84} height={81} className="rounded-lg" priority />
                     </Link>
-                    <div className="flex items-center gap-[37px] text-[18px] font-medium tracking-[-0.5px]">
+                    <div className="hidden md:flex items-center gap-[37px]">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`transition-colors hover:text-gray-200 ${isActiveLink(link.href) ? 'font-semibold' : ''}`}
+                                className={`font-['Inter'] text-[18px] font-medium tracking-[-0.5px] transition-colors hover:text-white/80 ${isActiveLink(link.href) ? "font-semibold" : ""}`}
                             >
                                 {link.name}
                             </Link>
                         ))}
                     </div>
-                    <div className="flex items-center gap-[16px]">
-                        <Link href="/login" className="box-border w-[124px] h-[52px] flex items-center justify-center text-[18px] font-semibold border-2 border-white rounded-lg transition-colors hover:bg-white hover:text-[#274C78]">
-                            Connexion
-                        </Link>
-                        <Link href="/register" className="w-[115.7px] h-[48px] flex items-center justify-center text-[18px] font-semibold bg-[#DBB42C] text-white rounded-lg shadow-lg transition-colors hover:bg-yellow-500">
-                            S’inscrire
-                        </Link>
+                    <div className="flex items-center gap-4">
+                        {user ? (
+                            <div className="flex items-center gap-3">
+                                <Link href={user.role === "professeur" ? "/espace-professeur" : "/espace-joueur"}
+                                    className="flex items-center gap-2 h-[48px] px-4 bg-white/10 border border-white/30 rounded-lg hover:bg-white/20 transition-colors">
+                                    <div className="w-7 h-7 rounded-full bg-[#dbb42b] flex items-center justify-center">
+                                        <span className="text-[#140759] font-bold text-xs">{user.name.charAt(0).toUpperCase()}</span>
+                                    </div>
+                                    <span className="font-['Inter'] font-semibold text-sm text-white">{user.name}</span>
+                                </Link>
+                                <button onClick={() => { localStorage.removeItem("mock_user"); setUser(null); }}
+                                    className="h-[48px] px-4 border border-white/30 rounded-lg text-white/70 text-sm hover:text-white transition-colors">
+                                    Déconnexion
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    className="box-border w-[124px] h-[52px] flex items-center justify-center font-['Inter'] text-[18px] font-semibold border-2 border-white rounded-lg hover:bg-white hover:text-[#274C78] transition-colors"
+                                >
+                                    Connexion
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="w-[115px] h-[48px] flex items-center justify-center font-['Inter'] text-[18px] font-semibold bg-[#DBB42B] rounded-lg shadow-lg hover:bg-yellow-500 transition-colors"
+                                >
+                                    S&apos;inscrire
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </nav>
 
-                {/* Hero Content (keep desktop positions; center on small screens) */}
-                <div className="absolute top-[214px] left-1/2 -translate-x-1/2 lg:left-[calc(50%-315.02px/2-560.49px)] lg:translate-x-0 w-[315px] sm:w-[420px] h-[42px] bg-white/10 border border-white/20 rounded-full flex items-center justify-center">
-                    <span className="font-medium text-[14px] leading-[20px] tracking-[-0.5px] px-4 text-center">La référence francophone Pokémon TCG</span>
+                {/* Badge */}
+                <div className="absolute top-[214px] left-[242px] w-[315px] h-[42px] bg-white/10 border border-white/20 rounded-full flex items-center justify-center">
+                    <span className="font-['Inter'] font-medium text-[14px] tracking-[-0.5px]">La référence francophone Pokémon TCG</span>
                 </div>
 
-                <div className="absolute top-[265px] left-1/2 -translate-x-1/2 lg:left-[calc(50%-604px/2-416px)] lg:translate-x-0 w-[280px] sm:w-[604px] lg:w-[604px]">
+                {/* H1 */}
+                <div className="absolute top-[265px] left-[242px] w-[604px]">
                     <h1 className="font-['Poppins'] font-bold text-[72px] leading-[84px] tracking-[-0.5px]">
-                        Devenez un Dresseur d&apos;Élite.
+                        Devenez un<br />Dresseur d&apos;Élite.
                     </h1>
                 </div>
 
-                <div className="absolute top-[456px] left-1/2 -translate-x-1/2 lg:left-[calc(50%-729px/2-353.5px)] lg:translate-x-0 w-[300px] sm:w-[729px]">
-                    <p className="font-medium text-[24px] leading-[33px] tracking-[-0.5px]">
-                        L&apos;unique plateforme qui combine Apprentissage, Coaching et Boutique Expert.
+                {/* Subtitle */}
+                <div className="absolute top-[456px] left-[242px] w-[729px]">
+                    <p className="font-['Inter'] font-medium text-[24px] leading-[33px] tracking-[-0.5px]">
+                        L&apos;unique plateforme qui combine{" "}
+                        <span className="underline decoration-[#E1BC2E] decoration-[3px] underline-offset-[5px]">Apprentissage</span>,{" "}
+                        <span className="underline decoration-[#A3CEF1] decoration-[3px] underline-offset-[5px]">Coaching</span> et{" "}
+                        <span className="underline decoration-[#8BBF00] decoration-[3px] underline-offset-[5px]">Boutique Expert</span>.
                     </p>
                 </div>
 
-                {/* Action Buttons (desktop left, center & stack on small screens) */}
-                <div className="absolute top-[596px] left-1/2 -translate-x-1/2 lg:left-[242px] lg:translate-x-0 flex flex-col sm:flex-row items-center gap-4 sm:gap-[24px] w-[90%] sm:w-auto max-w-[720px]">
-                     <Link href="/apprendre?variant=2" className="w-full sm:w-[253.83px] h-[60px] bg-[#DBB42B] rounded-xl shadow-[0px_4px_4px_rgba(0,0,0,0.25),_inset_0px_-4px_4px_rgba(0,0,0,0.5),_inset_0px_4px_4px_rgba(255,255,255,0.5)] flex items-center justify-center text-[#1A3A6E] font-bold text-[20px] tracking-[-0.5px]">
+                {/* CTA Buttons */}
+                <div className="absolute top-[596px] left-[242px] flex items-center gap-6">
+                    <Link
+                        href="/apprendre"
+                        className="w-[254px] h-[60px] bg-[#DBB42B] rounded-xl flex items-center justify-center font-['Inter'] font-bold text-[20px] text-[#1A3A6E] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] hover:bg-yellow-400 transition-colors"
+                    >
                         Explorer les cours
                     </Link>
-                    <Link href="/sequiper" className="box-border w-full sm:w-[236.44px] h-[64px] bg-[#01509D] border-2 border-[#A3CEF1] rounded-xl shadow-[0px_4px_4px_rgba(0,0,0,0.25),_inset_0px_-4px_4px_rgba(0,0,0,0.5),_inset_0px_4px_4px_rgba(255,255,255,0.5)] flex items-center justify-center text-white font-bold text-[20px] tracking-[-0.5px]">
+                    <Link
+                        href="/sequiper"
+                        className="w-[236px] h-[64px] bg-[#01509D] border-2 border-[#A3CEF1] rounded-xl flex items-center justify-center font-['Inter'] font-bold text-[20px] text-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] hover:bg-[#014080] transition-colors"
+                    >
                         Voir la boutique
                     </Link>
                 </div>
@@ -150,89 +247,134 @@ export default function Navbar() {
         );
     }
 
-    // Header for other pages: keep the blue background and decorative vectors,
-    // show the page title/subtitle centrally similar to the home hero.
+    // ── INNER PAGES ───────────────────────────────────────────────────────────
     const baseSegment = pathname.split("/").filter(Boolean)[0] || "";
     const derivedTitle = pageInfo?.title || (baseSegment ? baseSegment.charAt(0).toUpperCase() + baseSegment.slice(1) : "Page");
     const derivedSubtitle = pageInfo?.subtitle || "";
+    const breadcrumb = pageInfo?.breadcrumb;
+    const ctas = pageInfo?.ctas;
+
     return (
-        <header className="relative w-full bg-[#6096BA] overflow-hidden text-white font-['Inter']">
-            {/* Decorative vectors - same as home, shown responsively */}
+        <header className="relative w-full bg-[#6096BA] overflow-hidden text-white">
+            {/* Decorative vectors */}
             <Image
-                src={vector1Img}
-                alt=""
-                aria-hidden
-                className="hidden md:block absolute -top-2 -left-2 w-55 md:w-120 lg:w-217 h-auto"
-                style={{ transform: 'rotate(0.32deg)' }}
-                unoptimized
-                priority
+                width={872} height={711}
+                src={vector1Img} alt="" aria-hidden
+                className="absolute -top-2 -left-2 w-[340px] md:w-[540px] lg:w-[872px] h-auto opacity-80"
+                style={{ transform: "rotate(0.32deg)" }}
+                unoptimized priority
             />
             <Image
-                src={vector2Img}
-                alt=""
-                aria-hidden
-                className="hidden lg:block absolute top-55 right-0 w-100 lg:w-217 h-auto object-contain"
-                style={{ transform: 'none', objectFit: 'contain' }}
-                unoptimized
-                priority
+                width={873} height={969}
+                src={vector2Img} alt="" aria-hidden
+                className="hidden lg:block absolute top-32 right-0 w-[500px] lg:w-[873px] h-auto"
+                unoptimized priority
             />
             <Image
-                src={attachmentImg}
-                alt=""
-                aria-hidden
-                className="hidden lg:block absolute top-30 right-8 w-70 lg:w-140.5 h-auto object-contain"
-                unoptimized
-                priority
+                width={562} height={457}
+                src={attachmentImg} alt="" aria-hidden
+                className="hidden lg:block absolute top-10 right-8 w-[300px] lg:w-[500px] h-auto"
+                unoptimized priority
             />
 
-            {/* Navigation (top) */}
-            <nav className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-4 md:px-25 py-4">
-                <Link href="/" className="shrink-0 flex items-center gap-2">
-                    <Image
-                        src={logoImg}
-                        alt="Académie des Dresseurs"
-                        width={64}
-                        height={64}
-                        className="rounded-lg"
-                        priority
-                    />
-                    <span className="hidden md:inline text-xl font-bold">Académie des Dresseurs</span>
+            {/* Navigation */}
+            <nav className="relative z-10 flex justify-between items-center px-6 md:px-[100px] h-[81px]">
+                <Link href="/" className="flex-shrink-0">
+                    <Image src={logoImg} alt="Académie des Dresseurs" width={64} height={64} className="rounded-lg" priority />
                 </Link>
-
-                <div className="hidden md:flex items-center gap-8 text-sm font-semibold">
-                    {navLinks.map((link) => (
+                <div className="hidden md:flex items-center gap-[37px]">
+                    {navLinks.filter(l => l.href !== "/").map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className={`transition-colors hover:text-gray-200 ${isActiveLink(link.href) ? 'font-semibold' : ''}`}
+                            className={`font-['Inter'] text-[18px] font-medium tracking-[-0.5px] transition-colors hover:text-white/80 ${isActiveLink(link.href) ? "font-semibold" : ""}`}
                         >
                             {link.name}
                         </Link>
                     ))}
                 </div>
-
-                <div className="flex items-center gap-3">
-                    <Link href="/login" className="px-5 py-2.5 text-sm font-bold text-white/90 hover:bg-white/20 rounded-xl transition-all">
-                        Connexion
-                    </Link>
-                    <Link href="/register" className="px-6 py-2.5 text-sm font-bold text-white bg-[#DBB42C] rounded-full shadow-lg shadow-black/20 hover:opacity-95 transition-all">
-                        S&apos;inscrire
-                    </Link>
+                <div className="flex items-center gap-4">
+                    {user ? (
+                        <div className="flex items-center gap-3">
+                            <Link href={user.role === "professeur" ? "/espace-professeur" : "/espace-joueur"}
+                                className="flex items-center gap-2 h-[48px] px-4 bg-white/10 border border-white/30 rounded-lg hover:bg-white/20 transition-colors">
+                                <div className="w-7 h-7 rounded-full bg-[#dbb42b] flex items-center justify-center">
+                                    <span className="text-[#140759] font-bold text-xs">{user.name.charAt(0).toUpperCase()}</span>
+                                </div>
+                                <span className="font-['Inter'] font-semibold text-sm text-white">{user.name}</span>
+                            </Link>
+                            <button onClick={() => { localStorage.removeItem("mock_user"); setUser(null); }}
+                                className="h-[48px] px-4 border border-white/30 rounded-lg text-white/70 text-sm hover:text-white transition-colors">
+                                Déconnexion
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <Link
+                                href="/login"
+                                className="box-border px-6 h-[52px] flex items-center justify-center font-['Inter'] text-[18px] font-semibold border-2 border-white rounded-lg hover:bg-white hover:text-[#274C78] transition-colors"
+                            >
+                                Connexion
+                            </Link>
+                            <Link
+                                href="/register"
+                                className="px-6 h-[48px] flex items-center justify-center font-['Inter'] text-[18px] font-semibold bg-[#DBB42B] rounded-lg shadow-lg hover:bg-yellow-500 transition-colors"
+                            >
+                                S&apos;inscrire
+                            </Link>
+                        </>
+                    )}
                 </div>
             </nav>
 
-            {/* Page title area - follow reference alignment (center or left) */}
-            <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-18 md:pt-44 md:pb-24 lg:pt-48 lg:pb-28 text-left">
-                <div className="max-w-4xl">
-                    <h1 className="font-['Poppins'] font-extrabold text-[54px] md:text-[72px] lg:text-[88px] leading-[1.05] tracking-[-0.5px] drop-shadow-[0_4px_16px_rgba(0,0,0,0.25)]">
-                        {derivedTitle}
-                    </h1>
-                    {derivedSubtitle && (
-                        <p className="mt-5 text-xl md:text-2xl text-white/95 max-w-3xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.2)]">
-                            {derivedSubtitle}
-                        </p>
-                    )}
-                </div>
+            {/* Page hero content */}
+            <div className="relative z-10 px-6 md:px-[100px] pt-10 pb-14">
+                {/* Breadcrumb */}
+                {breadcrumb && (
+                    <div className="mb-4 font-['Inter'] text-[16px] text-[#dbeafe]">
+                        {breadcrumb.map((crumb, i) => (
+                            <span key={i}>
+                                {i > 0 && <span className="mx-2 opacity-60">&gt;</span>}
+                                {i < breadcrumb.length - 1 ? (
+                                    <Link href={i === 0 ? "/" : "#"} className="hover:text-white transition-colors">{crumb}</Link>
+                                ) : (
+                                    <span>{crumb}</span>
+                                )}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                {/* Title */}
+                <h1 className="font-['Poppins'] font-bold text-[72px] leading-[84px] tracking-[-0.5px] max-w-[900px]">
+                    {derivedTitle}
+                </h1>
+
+                {/* Subtitle */}
+                {derivedSubtitle && (
+                    <p className="mt-4 font-['Inter'] font-normal text-[24px] leading-[33px] text-[#dbeafe] max-w-[700px]">
+                        {derivedSubtitle}
+                    </p>
+                )}
+
+                {/* Optional CTAs */}
+                {ctas && ctas.length > 0 && (
+                    <div className="flex items-center gap-6 mt-8">
+                        {ctas.map((cta) => (
+                            <Link
+                                key={cta.href}
+                                href={cta.href}
+                                className={
+                                    cta.variant === "yellow"
+                                        ? "w-[254px] h-[60px] bg-[#DBB42B] rounded-xl flex items-center justify-center font-['Inter'] font-bold text-[20px] text-[#1A3A6E] hover:bg-yellow-400 transition-colors"
+                                        : "w-[236px] h-[64px] bg-[#01509D] border-2 border-[#A3CEF1] rounded-xl flex items-center justify-center font-['Inter'] font-bold text-[20px] text-white hover:bg-[#014080] transition-colors"
+                                }
+                            >
+                                {cta.label}
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </div>
         </header>
     );

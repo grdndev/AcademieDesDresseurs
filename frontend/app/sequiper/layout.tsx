@@ -8,7 +8,7 @@ export default function SEquiperLayout({
 }>) {
   return (
     <div className="min-h-screen bg-[#F9FAEE] font-outfit">
-      <Navbar />
+      <Navbar /> 
       <Header />
         {children}
     </div>

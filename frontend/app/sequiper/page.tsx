@@ -1,72 +1,90 @@
-import { Filter, Box, Zap, Layers } from "lucide-react";
+import Navbar from "../components/Navbar";
+import { Layers, Zap, Box, Package, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+const CATEGORIES = [
+    { icon: Layers,  iconBg: "bg-[#01509d]/10", iconColor: "text-[#01509d]",   title: "Decks préconstruits",    desc: "Decks compétitifs prêts à jouer, validés par nos experts.",           count: "24 decks",      href: "/sequiper/decks",       cta: "Voir les decks" },
+    { icon: Zap,     iconBg: "bg-yellow-400/10", iconColor: "text-yellow-600",  title: "Cartes à l'unité",       desc: "Boutique de cartes à l'unité avec stock en temps réel.",              count: "5 000+ cartes", href: "/sequiper/cartes",      cta: "Parcourir les cartes" },
+    { icon: Box,     iconBg: "bg-purple-500/10", iconColor: "text-purple-600",  title: "Accessoires",            desc: "Sleeves, playmats, deck boxes — le matériel des champions.",          count: "120+ produits", href: "/sequiper/accessoires", cta: "Voir les accessoires" },
+    { icon: Package, iconBg: "bg-red-400/10",    iconColor: "text-red-500",     title: "Produits officiels",     desc: "Booster boxes, ETBs et coffrets Pokémon Company authentiques.",        count: "50+ produits",  href: "/sequiper/produits",    cta: "Voir les produits" },
+];
+
+const FEATURED_DECKS = [
+    { name: "Lugia VSTAR Combo",    img: "/res/course1.png", price: 29, badge: "Méta" },
+    { name: "Miraidon ex Turbo",    img: "/res/course2.png", price: 29, badge: "Méta" },
+    { name: "Charizard ex Control", img: "/res/course3.png", price: 34, badge: "Standard" },
+];
+
 export default function SEquiperPage() {
-    const categories = [
-        { title: "Decks Préconstruits", count: 24, icon: Layers, href: "/sequiper/decks" },
-        { title: "Cartes à l'unité", count: "5000+", icon: Zap, href: "/sequiper/cartes" },
-        { title: "Accessoires", count: 120, icon: Box, href: "/sequiper/accessoires" },
-    ];
+    return (
+        <div className="min-h-screen bg-[#f9fafb]">
+            {/* <Navbar />  */}
 
-    return (<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {/* Categories */}
-                <div className="grid md:grid-cols-3 gap-6 mb-16">
-                    {categories.map((cat, idx) => (
-                        <Link href={cat.href} key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-md transition-shadow cursor-pointer">
-                            <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-primary">
-                                <cat.icon className="w-7 h-7" />
+            <main>
+                {/* Catégories */}
+                <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-12">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                        {CATEGORIES.map(({ icon: Icon, iconBg, iconColor, title, desc, count, href, cta }) => (
+                            <div key={title} className="bg-white rounded-2xl p-6 border border-[#e5e7eb] shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4">
+                                <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center`}>
+                                    <Icon className={`w-6 h-6 ${iconColor}`} />
+                                </div>
+                                <div>
+                                    <h3 className="font-['Inter'] font-bold text-[#140759] mb-0.5">{title}</h3>
+                                    <p className="text-xs text-[#808896] mb-1">{count}</p>
+                                    <p className="text-sm text-[#4b5563]">{desc}</p>
+                                </div>
+                                <Link href={href} className="mt-auto flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
+                                    {cta} <ArrowRight className="w-4 h-4" />
+                                </Link>
                             </div>
+                        ))}
+                    </div>
+
+                    {/* Builder promo */}
+                    <div className="bg-gradient-to-r from-[#140759] to-[#01509d] rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div>
+                            <span className="text-xs font-bold text-[#dbb42b] uppercase tracking-wider mb-2 block">Exclusivité Académie</span>
+                            <h2 className="font-['Poppins'] font-bold text-2xl text-white mb-2">Deck-to-Stock Builder</h2>
+                            <p className="text-sm text-white/70 max-w-md">Collez votre decklist Limitless et nous préparons votre panier automatiquement selon nos stocks.</p>
+                        </div>
+                        <Link href="/sequiper/builder" className="flex-shrink-0 h-11 px-6 bg-[#dbb42b] text-[#140759] font-['Inter'] font-bold text-sm rounded-xl flex items-center gap-2 hover:bg-[#c9a120] transition-colors">
+                            <Zap className="w-4 h-4" /> Essayer l&apos;outil
+                        </Link>
+                    </div>
+                </section>
+
+                {/* Tous les decks faits pour vous */}
+                <section className="bg-[#e3ecf8] py-14">
+                    <div className="max-w-[1280px] mx-auto px-6 lg:px-[100px]">
+                        <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h3 className="font-bold text-lg">{cat.title}</h3>
-                                <span className="text-sm text-gray-500">{cat.count} articles</span>
+                                <h2 className="font-['Poppins'] font-bold text-2xl text-[#140759]">Tous les decks faits pour vous</h2>
+                                <p className="text-sm text-[#808896] mt-1">Sélectionnés et validés par nos experts compétitifs.</p>
                             </div>
-                        </Link>
-                    ))}
-                </div>
-
-                {/* Deck-to-Stock Promo */}
-                <div className="bg-[#004A99] rounded-[40px] p-10 text-white flex flex-col md:flex-row items-center gap-10 mb-16 relative overflow-hidden shadow-2xl">
-                    <div className="flex-1 relative z-10">
-                        <span className="bg-accent text-slate-900 px-3 py-1 rounded-lg text-xs font-black mb-4 inline-block">EXCLUSIVITÉ ACADÉMIE</span>
-                        <h2 className="text-3xl font-black mb-4">Outil Deck-to-Stock Builder</h2>
-                        <p className="text-blue-100 text-lg mb-8 max-w-md">
-                            Collez votre decklist (Limitless/Live) et nous préparons votre panier automatiquement selon nos stocks.
-                        </p>
-                        <Link href="/sequiper/builder" className="w-3xs px-8 py-4 bg-white text-primary text-center rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-2">
-                            Essayer l&apos;outil
-                            <Zap className="w-5 h-5 fill-current" />
-                        </Link>
-                    </div>
-                    <div className="w-full md:w-1/3 h-64 bg-white/10 rounded-3xl border border-white/20 backdrop-blur-sm flex items-center justify-center relative z-10">
-                        <div className="text-center opacity-50">
-                            <Layers className="w-16 h-16 mx-auto mb-4" />
-                            <span className="text-sm">Prévisualisation de l&apos;outil</span>
+                            <Link href="/sequiper/decks" className="flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
+                                Voir tous <ArrowRight className="w-4 h-4" />
+                            </Link>
+                        </div>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {FEATURED_DECKS.map((d) => (
+                                <Link key={d.name} href="/sequiper/decks" className="bg-white rounded-2xl overflow-hidden border border-[#e5e7eb] shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="h-36 overflow-hidden">
+                                        <img src={d.img} alt={d.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-['Inter'] font-bold text-sm text-[#140759]">{d.name}</p>
+                                            <span className="text-xs bg-[#01509d] text-white px-2 py-0.5 rounded-full mt-1 inline-block">{d.badge}</span>
+                                        </div>
+                                        <span className="font-['Poppins'] font-bold text-lg text-[#140759]">{d.price}€</span>
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
                     </div>
-                    {/* Flare */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
-                </div>
-
-                {/* Filters & Grid Placeholders */}
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-black">Nouveautés</h2>
-                    <Link href="/sequiper/cartes" className="flex items-center gap-2 text-primary font-bold hover:underline">
-                        <Filter className="w-5 h-5" />
-                        Voir le catalogue
-                    </Link>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="animate-pulse bg-white border border-gray-100 rounded-3xl overflow-hidden h-80">
-                            <div className="h-48 bg-gray-100"></div>
-                            <div className="p-5 space-y-3">
-                                <div className="h-4 bg-gray-100 rounded-full w-2/3"></div>
-                                <div className="h-6 bg-gray-100 rounded-full w-1/3"></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                </section>
             </main>
+        </div>
     );
 }

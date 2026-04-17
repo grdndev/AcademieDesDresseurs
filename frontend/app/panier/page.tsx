@@ -1,237 +1,216 @@
 "use client";
 
+import { useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import Navbar from "../components/Navbar";
 import { formatPrice } from "../utils";
 import getApiBase from "@/app/lib/api";
 import { useCart } from "../context/cart-provider";
-import { useEffect } from "react";
-import Link from "next/link";
 import { cartItem } from "@/app/types/card";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Truck, Shield } from "lucide-react";
 
 export default function PanierPage() {
-  const { state, dispatch } = useCart();
-  const subtotal = state.items.reduce((sum: number, item: cartItem) => sum + item.price * item.quantity, 0);
-  const missing = state.items.filter((item: cartItem) => item.stock !== undefined && item.quantity > item.stock);
-  const isValid = missing.length === 0;
-  const shipping = subtotal < 50 ? 4.99 : subtotal < 100 ? 2.99 : 0;
-  const taxes = (subtotal + shipping) * 0.2;
-  const total = subtotal + shipping + taxes;
+    const { state, dispatch } = useCart();
 
-  const handleQuantityChange = (itemId: string, newQuantity: number) => {
-    // Vérifier si le changement dépasse le stock
-    const item = state.items.find((i: cartItem) => i._id === itemId);
-    if (item && newQuantity > 0) {
-      dispatch({ type: "UPDATE_QUANTITY", payload: { id: itemId, quantity: newQuantity } });
-    } else if (newQuantity === 0) {
-      dispatch({ type: "REMOVE_ITEM", payload: itemId });
+    const subtotal  = state.items.reduce((sum: number, item: cartItem) => sum + item.price * item.quantity, 0);
+    const missing   = state.items.filter((item: cartItem) => item.stock !== undefined && item.quantity > item.stock);
+    const isValid   = missing.length === 0;
+    const shipping  = subtotal >= 50 ? 0 : subtotal >= 25 ? 2.99 : 4.99;
+    const total     = subtotal + shipping;
+
+    function handleQty(id: string, qty: number) {
+        if (qty <= 0) dispatch({ type: "REMOVE_ITEM", payload: id });
+        else dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity: qty } });
     }
-  };
 
-  const handleRemove = (itemId: string) => {
-    dispatch({ type: "REMOVE_ITEM", payload: itemId });
-  };
+    const checkCart = async () => {
+        if (state.items.length === 0) return;
+        try {
+            const items = state.items.map((item: cartItem) => ({ itemType: item.itemType, itemId: item._id, quantity: item.quantity }));
+            const response = await fetch(`${getApiBase()}/orders/check-cart`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items }),
+            });
+            const data = await response.json();
+            const itemsWithStock = data.stock.map((i: cartItem) => {
+                const ci = state.items.find((c: cartItem) => c._id === i._id);
+                return { ...ci, stock: i.stock };
+            });
+            dispatch({ type: "SET_STOCK", payload: itemsWithStock });
+        } catch {}
+    };
 
-  const checkCart = async () => {
-    try {
-      if (state.items.length === 0) {
-        return;
-      }
+    useEffect(() => { checkCart(); }, []);
 
-      const items = state.items.map((item: cartItem) => ({
-        itemType: item.itemType,
-        itemId: item._id,
-        quantity: item.quantity
-      }));
+    return (
+        <div className="min-h-screen bg-[#f9fafb]">
+            <Navbar />
 
-  const response = await fetch(`${getApiBase()}/orders/check-cart`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ items })
-      });
+            <main className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-10">
 
-      const data = await response.json();
+                <Link href="/sequiper" className="inline-flex items-center gap-2 text-[#808896] hover:text-[#01509d] text-sm font-medium mb-8 transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> Continuer mes achats
+                </Link>
 
-      const itemsWithStock = data.stock.map((i: cartItem) => {
-        const cartItem = state.items.find((ci: cartItem) => ci._id === i._id)
-        return {
-          ...cartItem,
-          stock: i.stock
-        };
-      })
-
-      dispatch({ type: "SET_STOCK", payload: itemsWithStock });
-    } catch (err) {
-
-    }
-  };
-
-  useEffect(() => { checkCart() }, []);
-
-  return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-[#004A99] mb-2">Mon panier</h1>
-        <div className="h-1 w-24 bg-[#E1BC2E]"></div>
-      </div>
-
-      {/* Alertes de stock */}
-      {!isValid && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div>Stock insuffisant :</div>
-            <div className="space-y-2 text-red-600">
-              {missing.map((missingItem: cartItem) => (
-                <div key={missingItem._id} className="text-sm">
-                  <span className="font-medium">- {missingItem.nameFR ?? missingItem.nameEN}</span>: {missingItem.quantity} demandés / {missingItem.stock !== undefined && missingItem.stock > 0 ? missingItem.stock + " en stock" : "stock épuisé" }
-                </div>
-              ))}
-            </div>
-        </div>
-      )}
-
-      {state.items.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <p className="text-xl text-gray-600 mb-6">Votre panier est vide</p>
-          <Link
-            href="/sequiper/cartes"
-            className="inline-block bg-[#004A99] text-white px-6 py-3 rounded-lg hover:bg-[#25476E] transition-colors"
-          >
-            Continuer vos achats
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Articles du panier */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="hidden md:grid grid-cols-12 gap-4 bg-gray-50 p-6 font-semibold text-gray-700 border-b">
-                <div className="col-span-4">Produit</div>
-                <div className="col-span-2 text-center">Prix</div>
-                <div className="col-span-3 text-center">Quantité</div>
-                <div className="col-span-3 text-right">Total</div>
-              </div>
-
-              <div className="divide-y">
-                {state.items.map((item: cartItem) => (
-                  <div
-                    key={item._id}
-                    className="p-6 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="md:hidden mb-4">
-                      <h3 className="font-semibold text-[#004A99] mb-2">
-                        {item.nameFR ?? item.nameEN}
-                      </h3>
+                {/* Stock alerts */}
+                {!isValid && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
+                        <p className="font-semibold mb-1">Certains articles dépassent le stock disponible :</p>
+                        {missing.map((item: cartItem) => (
+                            <p key={item._id}>
+                                — {item.nameFR ?? item.nameEN} : {item.quantity} demandés /{" "}
+                                {item.stock !== undefined && item.stock > 0 ? `${item.stock} en stock` : "rupture"}
+                            </p>
+                        ))}
                     </div>
-                    <div className="grid grid-cols-12 gap-4 items-center">
-                      {/* Nom du produit */}
-                      <div className="col-span-12 md:col-span-4">
-                        <p className="hidden md:block font-semibold text-[#004A99]">
-                          {item.nameFR ?? item.nameEN}
-                        </p>
-                      </div>
+                )}
 
-                      {/* Prix */}
-                      <div className="col-span-6 md:col-span-2 md:text-center">
-                        <span className="md:hidden font-semibold mr-2">
-                          Prix:
-                        </span>
-                        <span className="text-gray-700">{formatPrice(item.price)}€</span>
-                      </div>
-
-                      {/* Quantité */}
-                      <div className="col-span-6 md:col-span-3 flex justify-end md:justify-center items-center gap-2">
-                        <button
-                          onClick={() =>
-                            handleQuantityChange(item._id, item.quantity - 1)
-                          }
-                          className="bg-gray-200 hover:bg-gray-300 text-gray-800 w-8 h-8 rounded flex items-center justify-center transition-colors"
-                          title="Diminuer la quantité"
-                        >
-                          −
-                        </button>
-                        <span className="w-8 text-center font-semibold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            handleQuantityChange(item._id, item.quantity + 1)
-                          }
-                          className="bg-[#8BBF00] hover:bg-[#6fa000] text-white w-8 h-8 rounded flex items-center justify-center transition-colors"
-                          title="Augmenter la quantité"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      {/* Total ligne et bouton supprimer */}
-                      <div className="col-span-12 md:col-span-3 flex items-center justify-between md:justify-end gap-4">
-                        <span className="font-semibold text-[#004A99]">
-                          {formatPrice(item.price * item.quantity)}€
-                        </span>
-                        <button
-                          onClick={() => handleRemove(item._id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm transition-colors"
-                          title="Supprimer cet article"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                {state.items.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm p-16 flex flex-col items-center gap-5">
+                        <ShoppingBag className="w-14 h-14 text-[#e5e7eb]" />
+                        <p className="font-['Poppins'] font-bold text-xl text-[#140759]">Votre panier est vide</p>
+                        <p className="text-sm text-[#808896]">Parcourez notre boutique et ajoutez des articles.</p>
+                        <Link href="/sequiper" className="h-11 px-6 bg-[#01509d] hover:bg-[#014080] text-white font-['Inter'] font-bold text-sm rounded-xl flex items-center gap-2 transition-colors">
+                            <ShoppingBag className="w-4 h-4" /> Découvrir la boutique
+                        </Link>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                ) : (
+                    <div className="grid lg:grid-cols-3 gap-8">
 
-          {/* Résumé et paiement */}
-          <div>
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-              <h2 className="text-2xl font-bold text-[#004A99] mb-6">
-                Résumé
-              </h2>
+                        {/* ── Articles ── */}
+                        <div className="lg:col-span-2 space-y-4">
+                            <h2 className="font-['Poppins'] font-bold text-lg text-[#140759] mb-2">
+                                Mon panier ({state.items.length} article{state.items.length > 1 ? "s" : ""})
+                            </h2>
 
-              <div className="space-y-4 mb-6 pb-6 border-b">
-                <div className="flex justify-between text-gray-700">
-                  <span>Sous-total:</span>
-                  <span>{formatPrice(subtotal)}€</span>
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>Frais de port:</span>
-                  { shipping > 0 ?
-                    <span className="font-semibold">{formatPrice(shipping)}€</span>
-                  : <span className="text-green-600 font-semibold">Gratuit</span>
-                  }
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>TVA 20%:</span>
-                  <span>{formatPrice(taxes)}€</span>
-                </div>
-              </div>
+                            {state.items.map((item: cartItem) => {
+                                const overStock = item.stock !== undefined && item.quantity > item.stock;
+                                return (
+                                    <div key={item._id} className={`bg-white rounded-2xl border shadow-sm p-4 flex items-center gap-4 ${overStock ? "border-red-300" : "border-[#e5e7eb]"}`}>
+                                        {/* Thumbnail */}
+                                        <div className="w-16 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-[#f3f4f6]">
+                                            {item.images?.front ? (
+                                                <Image src={item.images.front} width={64} height={80} className="object-cover w-full h-full" alt={item.nameFR ?? item.nameEN ?? ""} unoptimized />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[#9ca3af] text-xs">—</div>
+                                            )}
+                                        </div>
 
-              <div className="flex justify-between text-xl font-bold text-[#004A99] mb-6">
-                <span>Total:</span>
-                <span>{formatPrice(total)}€</span>
-              </div>
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-['Inter'] font-semibold text-sm text-[#140759] truncate">{item.nameFR ?? item.nameEN}</p>
+                                            {overStock && (
+                                                <p className="text-xs text-red-500 mt-0.5">Stock insuffisant ({item.stock} disponible{item.stock !== 1 ? "s" : ""})</p>
+                                            )}
+                                            <p className="text-xs text-[#808896] mt-1 capitalize">{item.itemType}</p>
+                                        </div>
 
-              {isValid ? <Link
-                href="/panier/checkout"
-                className="block text-center w-full bg-[#E1BC2E] hover:bg-[#d4b620] text-[#004A99] font-bold py-3 px-4 rounded-lg transition-colors mb-3"
-              >
-                Commander
-              </Link> : <div className="block text-center w-full bg-gray-200 text-gray-500 font-bold py-3 px-4 rounded-lg mb-3 cursor-not-allowed">
-                Commander
-              </div>}
+                                        {/* Qty */}
+                                        <div className="flex items-center border border-[#e5e7eb] rounded-xl overflow-hidden bg-white">
+                                            <button onClick={() => handleQty(item._id, item.quantity - 1)} className="w-9 h-9 flex items-center justify-center text-[#140759] hover:bg-gray-50 transition-colors">
+                                                <Minus className="w-3.5 h-3.5" />
+                                            </button>
+                                            <span className="w-8 text-center text-sm font-bold text-[#140759]">{item.quantity}</span>
+                                            <button
+                                                onClick={() => handleQty(item._id, item.quantity + 1)}
+                                                disabled={item.stock !== undefined && item.quantity >= item.stock}
+                                                className="w-9 h-9 flex items-center justify-center text-[#140759] hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
 
-              <Link
-                href="/sequiper/cartes"
-                className="block text-center text-[#004A99] hover:text-[#25476E] font-semibold py-2 transition-colors"
-              >
-                Continuer les achats
-              </Link>
-            </div>
-          </div>
+                                        {/* Price */}
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="font-['Poppins'] font-bold text-[#140759]">{formatPrice(item.price * item.quantity)} €</p>
+                                            {item.quantity > 1 && (
+                                                <p className="text-xs text-[#808896]">{formatPrice(item.price)} € / unité</p>
+                                            )}
+                                        </div>
+
+                                        {/* Remove */}
+                                        <button onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item._id })} className="w-9 h-9 flex items-center justify-center text-[#808896] hover:text-red-500 transition-colors flex-shrink-0">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* ── Résumé ── */}
+                        <div>
+                            <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm p-6 sticky top-6">
+                                <h2 className="font-['Poppins'] font-bold text-lg text-[#140759] mb-6">Résumé de la commande</h2>
+
+                                <div className="space-y-3 text-sm mb-6">
+                                    <div className="flex justify-between text-[#4b5563]">
+                                        <span>Sous-total</span>
+                                        <span className="font-semibold text-[#140759]">{formatPrice(subtotal)} €</span>
+                                    </div>
+                                    <div className="flex justify-between text-[#4b5563]">
+                                        <span>Livraison</span>
+                                        {shipping === 0 ? (
+                                            <span className="font-semibold text-green-600">Gratuite</span>
+                                        ) : (
+                                            <span className="font-semibold text-[#140759]">{formatPrice(shipping)} €</span>
+                                        )}
+                                    </div>
+                                    {subtotal > 0 && subtotal < 50 && (
+                                        <p className="text-xs text-[#808896] bg-[#f9fafb] rounded-xl p-3">
+                                            Plus que <span className="font-semibold text-[#01509d]">{formatPrice(50 - subtotal)} €</span> pour la livraison gratuite !
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="border-t border-[#e5e7eb] pt-4 mb-6 flex justify-between items-center">
+                                    <span className="font-['Poppins'] font-bold text-[#140759]">Total</span>
+                                    <span className="font-['Poppins'] font-bold text-2xl text-[#140759]">{formatPrice(total)} €</span>
+                                </div>
+
+                                {isValid ? (
+                                    <Link href="/panier/checkout" className="block w-full h-12 bg-[#dbb42b] hover:bg-[#c9a120] text-[#140759] font-['Inter'] font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                        Commander
+                                    </Link>
+                                ) : (
+                                    <div className="block w-full h-12 bg-gray-200 text-gray-500 font-['Inter'] font-bold text-sm rounded-xl flex items-center justify-center cursor-not-allowed">
+                                        Commander
+                                    </div>
+                                )}
+
+                                <div className="mt-4 space-y-2 text-xs text-[#808896]">
+                                    <div className="flex items-center gap-2"><Truck className="w-3.5 h-3.5 text-[#01509d]" /> Livraison gratuite dès 50 €</div>
+                                    <div className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-[#01509d]" /> Paiement sécurisé</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {state.items.length > 0 && (
+                    <section className="mt-12">
+                        <h2 className="font-['Poppins'] font-bold text-xl text-[#140759] mb-6">Vous pourriez aussi aimer</h2>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                            {[
+                                { title: "Dragon Shield Sleeves x100", type: "Accessoire", price: 12.99, color: "bg-[#01509d]",   href: "/sequiper/accessoires" },
+                                { title: "Charizard ex Control Deck",  type: "Deck",       price: 34,    color: "bg-[#140759]",   href: "/sequiper/decks" },
+                                { title: "Booster Box Paldea",         type: "Produit",    price: 129.99,color: "bg-[#4f46e5]",   href: "/sequiper/produits" },
+                                { title: "Cours : Bases du TCG",       type: "Cours",      price: 19,    color: "bg-[#059669]",   href: "/apprendre" },
+                            ].map((p) => (
+                                <Link key={p.title} href={p.href} className={`${p.color} rounded-2xl p-5 flex flex-col gap-3 min-h-[110px] hover:opacity-90 transition-opacity`}>
+                                    <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full w-fit">{p.type}</span>
+                                    <p className="font-['Inter'] font-bold text-sm text-white leading-snug flex-1">{p.title}</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-['Poppins'] font-bold text-white">{p.price.toFixed(2).replace(".", ",")} €</span>
+                                        <span className="text-xs font-bold bg-white/20 text-white px-2.5 py-1 rounded-full">Voir</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </main>
         </div>
-      )}
-    </main>
-  );
+    );
 }
