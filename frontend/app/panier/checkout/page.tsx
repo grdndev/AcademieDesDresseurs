@@ -56,14 +56,21 @@ export default function CheckoutPage() {
     }
 
     function validate(): boolean {
-        const required: [string, string][] = [
-            ["firstName", "Le prénom est requis"], ["lastName", "Le nom est requis"],
-            ["email", "L'email est requis"], ["phone", "Le téléphone est requis"],
-            ["street", "L'adresse est requise"], ["city", "La ville est requise"],
+        const required: [keyof FormData, string][] = [
+            ["firstName", "Le prénom est requis"],
+            ["lastName", "Le nom est requis"],
+            ["email", "L'email est requis"],
+            ["phone", "Le téléphone est requis"],
+            ["street", "L'adresse est requise"],
+            ["city", "La ville est requise"],
             ["zipCode", "Le code postal est requis"],
         ];
         for (const [field, msg] of required) {
-            if (!(formData as Record<string, unknown>)[field]) { setError(msg); return false; }
+            const value = formData[field];
+            if (value === undefined || value === null || value === "") {
+                setError(msg);
+                return false;
+            }
         }
         if (!formData.useSameAddress) {
             if (!formData.billingStreetAddress) { setError("L'adresse de facturation est requise"); return false; }

@@ -84,11 +84,17 @@ export default function DetailCartePage() {
                         </div>
                         {/* Thumbnails */}
                         <div className="flex justify-center gap-3 mt-4">
-                            {[data.images.front, data.images.front, data.images.back, data.images.back].filter(Boolean).slice(0, 4).map((img, i) => (
-                                <div key={i} className="w-16 h-20 rounded-lg overflow-hidden border-2 border-[#e5e7eb] cursor-pointer hover:border-[#01509d] transition-colors">
-                                    {img && <Image src={img} width={64} height={80} className="object-cover w-full h-full" alt="" unoptimized />}
-                                </div>
-                            ))}
+                            {([
+                                data.images?.front,
+                                (data.images as unknown as { back?: string } | undefined)?.back,
+                            ])
+                                .filter((img): img is string => Boolean(img))
+                                .slice(0, 4)
+                                .map((img, i) => (
+                                    <div key={i} className="w-16 h-20 rounded-lg overflow-hidden border-2 border-[#e5e7eb] cursor-pointer hover:border-[#01509d] transition-colors">
+                                        <Image src={img} width={64} height={80} className="object-cover w-full h-full" alt="" unoptimized />
+                                    </div>
+                                ))}
                         </div>
                     </div>
 
@@ -103,7 +109,7 @@ export default function DetailCartePage() {
                                 </span>
                             </div>
                             <h1 className="font-['Poppins'] font-bold text-2xl text-[#140759]">{data.nameFR ?? data.nameEN}</h1>
-                            <p className="text-sm text-[#808896] mt-1">{data.setCode} · {data.setNameFR ?? data.setNameEN} · {data.rarity}</p>
+                            <p className="text-sm text-[#808896] mt-1">{data.setCode} · {data.setNameFR}</p>
                         </div>
 
                         {/* Prix + stock */}

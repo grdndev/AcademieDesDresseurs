@@ -1,10 +1,15 @@
 export type card = {
     _id: string,
-    images: {front: string},
+    images: {
+        front: string;
+        back?: string;
+    },
     nameFR: string,
     nameEN: string,
     setNameFR: string,
+    setNameEN?: string,
     setCode: string,
+    rarity?: string,
     price: number,
     stock: number
 }
