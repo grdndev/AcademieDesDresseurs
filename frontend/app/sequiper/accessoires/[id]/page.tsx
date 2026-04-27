@@ -33,7 +33,7 @@ export default function AccessoireDetailPage() {
 
     return (
         <div className="min-h-screen bg-[#f9fafb]">
-            <Navbar /> 
+            {/* <Navbar />  */}
 
             <main className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-10">
                 <Link href="/sequiper/accessoires" className="inline-flex items-center gap-2 text-[#808896] hover:text-[#01509d] text-sm font-medium mb-8 transition-colors">

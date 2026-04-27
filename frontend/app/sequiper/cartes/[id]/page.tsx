@@ -44,7 +44,7 @@ export default function DetailCartePage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-[#f9fafb]">
-                <Navbar /> 
+                {/* <Navbar />  */}
                 <div className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-20 flex justify-center">
                     <div className="w-10 h-10 border-4 border-[#01509d] border-t-transparent rounded-full animate-spin" />
                 </div>
