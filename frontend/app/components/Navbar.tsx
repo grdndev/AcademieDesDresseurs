@@ -239,6 +239,11 @@ const pageTitles: { [key: string]: PageInfo } = {
         subtitle: "Trouvez les meilleures cartes, decks et accessoires.",
         breadcrumb: ["Accueil", "S'équiper"],
     },
+    "/professeur/avantages": {
+        title: "Avantages Professeur",
+        subtitle: "Tout ce que l'Académie offre à ses formateurs certifiés.",
+        breadcrumb: ["Accueil", "Devenir Professeur", "Avantages"],
+    },
     "/professeur/candidature": {
         title: "Candidature Professeur",
         subtitle: "Rejoignez l'Académie et partagez votre expertise avec la communauté.",
@@ -249,8 +254,8 @@ const pageTitles: { [key: string]: PageInfo } = {
         subtitle: "Rejoignez l'Académie des Dresseurs et enseignez aux joueurs de demain.",
         breadcrumb: ["Accueil", "Devenir Professeur"],
         ctas: [
-            { label: "Postuler maintenant", href: "/professeur#candidature", variant: "yellow" },
-            { label: "En savoir plus", href: "/professeur#avantages", variant: "blue" },
+            { label: "Postuler maintenant", href: "/professeur/candidature", variant: "yellow" },
+            { label: "En savoir plus", href: "/professeur/avantages", variant: "blue" },
         ],
     },
     "/wallet": {
@@ -303,6 +308,9 @@ export default function Navbar() {
     if (isHome) {
         return (
             <header className="relative w-full h-[794px] bg-[#6096BA] overflow-hidden text-white">
+                {/* Dot pattern overlay */}
+                <DotsPattern />
+
                 {/* Decorative vectors */}
                 <Image
                     width={872} height={711}
@@ -334,7 +342,7 @@ export default function Navbar() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`font-['Inter'] text-[18px] font-medium tracking-[-0.5px] transition-colors hover:text-white/80 ${isActiveLink(link.href) ? "font-semibold" : ""}`}
+                                className={`font-['Inter'] text-[22px] font-medium tracking-[-0.5px] transition-colors hover:text-white/80 ${isActiveLink(link.href) ? "font-semibold" : ""}`}
                             >
                                 {link.name}
                             </Link>
@@ -391,7 +399,7 @@ export default function Navbar() {
                     <p className="font-['Inter'] font-medium text-[24px] leading-[33px] tracking-[-0.5px]">
                         L&apos;unique plateforme qui combine{" "}
                         <span className="underline decoration-[#E1BC2E] decoration-[3px] underline-offset-[5px]">Apprentissage</span>,{" "}
-                        <span className="underline decoration-[#A3CEF1] decoration-[3px] underline-offset-[5px]">Coaching</span> et{" "}
+                        <span className="underline decoration-[#2563EB] decoration-[3px] underline-offset-[5px]">Coaching</span> et{" "}
                         <span className="underline decoration-[#8BBF00] decoration-[3px] underline-offset-[5px]">Boutique Expert</span>.
                     </p>
                 </div>
@@ -465,7 +473,7 @@ export default function Navbar() {
                         <Link
                             key={link.href}
                             href={link.href}
-                            className={`font-['Inter'] text-[18px] font-medium tracking-[-0.5px] transition-colors hover:text-white/80 ${isActiveLink(link.href) ? "font-semibold" : ""}`}
+                            className={`font-['Inter'] text-[20px] font-medium tracking-[-0.5px] transition-colors hover:text-white/80 ${isActiveLink(link.href) ? "font-semibold" : ""}`}
                         >
                             {link.name}
                         </Link>

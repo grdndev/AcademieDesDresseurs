@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../../../components/Navbar";
@@ -97,7 +98,8 @@ const ALL_COACHES = [
 const SLOTS = ["09:00", "10:30", "14:00", "15:30", "17:00", "18:30"];
 const DAYS  = ["Lun 20", "Mar 21", "Mer 22", "Jeu 23", "Ven 24", "Sam 25"];
 
-export default function CoachProfilePage({ params }: { params: { id: string } }) {
+export default function CoachProfilePage() {
+    const params = useParams<{ id: string }>();
     const id     = parseInt(params.id, 10);
     const coach  = ALL_COACHES.find(c => c.id === id) ?? ALL_COACHES[0];
     const others = ALL_COACHES.filter(c => c.id !== id).slice(0, 3);
