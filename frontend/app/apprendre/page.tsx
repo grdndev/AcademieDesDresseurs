@@ -5,23 +5,17 @@ import Navbar from "../components/Navbar";
 import CourseCard from "../components/CourseCard";
 import GuideCard from "../components/GuideCard";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Video, FileText, Users, Search } from "lucide-react";
-
-const COURS_A_SUIVRE = [
-  { image: "/res/course1.png", isLive: true, date: "22 Jan 2024", level: "Avancé",        title: "Préparation tournoi régional",        authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "4h00", price: 49, href: "/apprendre/1" },
-  { image: "/res/course2.png",              date: "28 Jan 2024", level: "Intermédiaire", title: "Maîtriser le deck Miraidon ex",       authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h30", price: 29, href: "/apprendre/2" },
-  { image: "/res/course3.png",              date: "3 Fév 2024",  level: "Débutant",      title: "Les bases du JCC Pokémon",            authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h30", price: 19, href: "/apprendre/3" },
-];
+import { ArrowRight, Search, ChevronDown } from "lucide-react";
 
 const COURS_A_VENIR = [
-  { image: "/res/course1.png", date: "15 Fév 2024", level: "Avancé",        title: "Analyse méta Championnats Régionaux",   authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "3h30", price: 44, href: "/apprendre/7" },
-  { image: "/res/course2.png", date: "20 Fév 2024", level: "Intermédiaire", title: "Deck Building : Lugia VSTAR",           authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h00", price: 29, href: "/apprendre/8" },
-  { image: "/res/course3.png", date: "1 Mar 2024",  level: "Débutant",      title: "Introduction aux formats de tournoi",  authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h30", price: 19, href: "/apprendre/9" },
+  { image: "/res/course1.png", isLive: true, date: "15 Fév 2024", level: "Avancé",        title: "Analyse méta Championnats Régionaux",   authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "3h30", price: 44, href: "/apprendre/7" },
+  { image: "/res/course2.png",              date: "20 Fév 2024", level: "Intermédiaire", title: "Deck Building : Lugia VSTAR",           authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h00", price: 29, href: "/apprendre/8" },
+  { image: "/res/course3.png",              date: "1 Mar 2024",  level: "Débutant",      title: "Introduction aux formats de tournoi",  authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h30", price: 19, href: "/apprendre/9" },
 ];
 
 const COURS_A_REVOIR = [
-  { image: "/res/course1.png", date: "5 Jan 2024",  level: "Avancé",        title: "Analyse méta Régionaux de Lyon",        authorName: "Tonio",         authorRole: "Champion Régional", duration: "3h15", price: 39, href: "/apprendre/4" },
-  { image: "/res/course2.png", date: "1 Jan 2024",  level: "Intermédiaire", title: "Gestion des ressources en tournoi",     authorName: "Sarah K.",      authorRole: "Coach certifiée",   duration: "2h00", price: 24, href: "/apprendre/5" },
+  { image: "/res/course1.png", date: "5 Jan 2024",  level: "Avancé",        title: "Analyse méta Régionaux de Lyon",         authorName: "Tonio",           authorRole: "Champion Régional", duration: "3h15", price: 39, href: "/apprendre/4" },
+  { image: "/res/course2.png", date: "1 Jan 2024",  level: "Intermédiaire", title: "Gestion des ressources en tournoi",      authorName: "Sarah K.",        authorRole: "Coach certifiée",   duration: "2h00", price: 24, href: "/apprendre/5" },
   { image: "/res/course3.png", date: "28 Déc 2023", level: "Débutant",      title: "Construire son premier deck compétitif", authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h45", price: 19, href: "/apprendre/6" },
 ];
 
@@ -31,33 +25,41 @@ const GUIDES = [
   { gradientIndex: 2, level: "Intermédiaire", title: "Gestion de Ressources Avancée",    description: "Optimisez chaque carte et chaque action.",                    authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h30", rating: 4.7, views: 142, price: 45, href: "/apprendre/guide-3" },
 ];
 
-const ACCOMPAGNEMENT = [
-  { icon: Video,     title: "Cours en live",          desc: "Sessions interactives en direct avec les meilleurs coaches. Posez vos questions en temps réel." },
-  { icon: FileText,  title: "Guides stratégiques",    desc: "Analyses approfondies des decks, métas et stratégies rédigées par nos experts." },
-  { icon: BookOpen,  title: "Replays disponibles",    desc: "Accédez à toutes les sessions passées. Révisez à votre rythme, autant de fois que vous voulez." },
+const LEVELS    = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
+const PROFS     = ["Tous", "Thomas Moreau", "Lucas Bernard", "Prof. M. Dubois", "Sarah K.", "Tonio"];
+const FORMATS   = ["Tous", "Standard", "Expanded", "Live"];
+const PRIX_OPTS = ["Tous", "< 20€", "20€ – 40€", "> 40€"];
+
+const ALL_ITEMS = [
+  ...COURS_A_VENIR.map(c => ({ ...c, kind: "cours" as const })),
+  ...COURS_A_REVOIR.map(c => ({ ...c, kind: "cours" as const })),
+  ...GUIDES.map(g => ({ ...g, kind: "guide" as const })),
 ];
 
-const PROFESSEURS = [
-  { name: "Thomas Moreau",   role: "Coach compétitif",  avatar: "/res/avatar1.png", courses: 12, rating: 4.9 },
-  { name: "Prof. M. Dubois", role: "Professeur validé", avatar: "/res/avatar2.png", courses: 8,  rating: 4.8 },
-  { name: "Lucas Bernard",   role: "Joueur Top 16",     avatar: "/res/avatar3.png", courses: 6,  rating: 4.7 },
-  { name: "Sarah K.",        role: "Coach certifiée",   avatar: "/res/avatar1.png", courses: 9,  rating: 4.8 },
-];
+function matchesPrix(price: number, opt: string) {
+  if (opt === "Tous") return true;
+  if (opt === "< 20€") return price < 20;
+  if (opt === "20€ – 40€") return price >= 20 && price <= 40;
+  return price > 40;
+}
 
 export default function ApprendrePage() {
   const [search, setSearch] = useState("");
+  const [level,  setLevel]  = useState("Tous");
+  const [prof,   setProf]   = useState("Tous");
+  const [format, setFormat] = useState("Tous");
+  const [prix,   setPrix]   = useState("Tous");
+
   const q = search.trim().toLowerCase();
+  const isFiltering = q || level !== "Tous" || prof !== "Tous" || format !== "Tous" || prix !== "Tous";
 
-  const matchesCourse = (c: { title: string; authorName: string }) =>
-    c.title.toLowerCase().includes(q) || c.authorName.toLowerCase().includes(q);
-  const matchesGuide = (g: { title: string; authorName: string }) =>
-    g.title.toLowerCase().includes(q) || g.authorName.toLowerCase().includes(q);
-
-  const filteredCours = q
-    ? [...COURS_A_SUIVRE, ...COURS_A_VENIR, ...COURS_A_REVOIR].filter(matchesCourse)
-    : [];
-  const filteredGuides = q ? GUIDES.filter(matchesGuide) : [];
-  const hasResults = filteredCours.length > 0 || filteredGuides.length > 0;
+  const filtered = isFiltering ? ALL_ITEMS.filter(item => {
+    if (q && !item.title.toLowerCase().includes(q) && !item.authorName.toLowerCase().includes(q)) return false;
+    if (level !== "Tous" && item.level !== level) return false;
+    if (prof !== "Tous" && item.authorName !== prof) return false;
+    if (!matchesPrix(item.price, prix)) return false;
+    return true;
+  }) : [];
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
@@ -65,49 +67,56 @@ export default function ApprendrePage() {
 
       <main className="space-y-0">
 
-        {/* Barre de recherche */}
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] px-5 py-4 flex items-center gap-4 mb-8 shadow-sm mx-6 lg:mx-[100px] mt-8">
+        {/* Barre de recherche + filtres */}
+        <div className="bg-white rounded-2xl border border-[#e5e7eb] px-5 py-3 flex items-center gap-3 mb-8 shadow-sm mx-6 lg:mx-[100px] mt-8 flex-wrap">
           <Search className="w-4 h-4 text-[#9ca3af] flex-shrink-0" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher un cours, un guide…"
-            className="flex-1 text-sm bg-transparent outline-none placeholder:text-[#9ca3af] text-[#140759]" />
+            className="flex-1 min-w-[160px] text-sm bg-transparent outline-none placeholder:text-[#9ca3af] text-[#140759]" />
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { label: "Niveau",      opts: LEVELS,    val: level,  set: setLevel  },
+              { label: "Professeur",  opts: PROFS,     val: prof,   set: setProf   },
+              { label: "Format",      opts: FORMATS,   val: format, set: setFormat },
+              { label: "Prix",        opts: PRIX_OPTS, val: prix,   set: setPrix   },
+            ].map(({ label, opts, val, set }) => (
+              <div key={label} className="relative">
+                <select value={val} onChange={e => set(e.target.value)}
+                  className="appearance-none h-8 pl-3 pr-7 text-xs font-medium text-[#140759] border border-[#e5e7eb] rounded-xl bg-white cursor-pointer outline-none focus:border-[#01509d]">
+                  {opts.map(o => <option key={o} value={o}>{o === "Tous" ? label : o}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#808896] pointer-events-none" />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Résultats de recherche */}
-        {q && (
+        {/* Résultats filtrés */}
+        {isFiltering && (
           <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] pb-12">
-            {!hasResults ? (
-              <p className="text-sm text-[#808896]">Aucun résultat pour « {search} ».</p>
+            {filtered.length === 0 ? (
+              <p className="text-sm text-[#808896]">Aucun résultat.</p>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCours.map((c) => <CourseCard key={c.href} {...c} />)}
-                {filteredGuides.map((g) => <GuideCard key={g.href} {...g} />)}
+                {filtered.map(item =>
+                  item.kind === "guide"
+                    ? <GuideCard key={item.href} {...(item as Parameters<typeof GuideCard>[0])} />
+                    : <CourseCard key={item.href} {...(item as Parameters<typeof CourseCard>[0])} />
+                )}
               </div>
             )}
           </section>
         )}
 
-        {/* Sections normales (masquées quand recherche active) */}
-        {!q && (
+        {/* Sections normales */}
+        {!isFiltering && (
           <>
-            {/* Cours à suivre */}
-            <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-['Poppins'] font-bold text-2xl text-[#140759]">Cours à suivre</h2>
-                <Link href="/progresser/ateliers" className="flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
-                  Voir tous <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {COURS_A_SUIVRE.map((c) => <CourseCard key={c.href} {...c} />)}
-              </div>
-            </section>
-
             {/* Cours à venir */}
-            <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] pb-12">
-              <div className="flex items-center justify-between mb-6">
+            <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-12">
+              <div className="relative text-center mb-6">
                 <h2 className="font-['Poppins'] font-bold text-2xl text-[#140759]">Cours à venir</h2>
-                <Link href="/apprendre/cours/venir" className="flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
+                <p className="text-sm text-[#808896] mt-1">Sessions live avec interaction en direct</p>
+                <Link href="/apprendre/cours/venir" className="absolute right-0 top-0 flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
                   Voir tous <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -118,9 +127,10 @@ export default function ApprendrePage() {
 
             {/* Cours à revoir */}
             <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] pb-12">
-              <div className="flex items-center justify-between mb-6">
+              <div className="relative text-center mb-6">
                 <h2 className="font-['Poppins'] font-bold text-2xl text-[#140759]">Cours à revoir</h2>
-                <Link href="/apprendre/cours/revoir" className="flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
+                <p className="text-sm text-[#808896] mt-1">Replays disponibles en accès illimité</p>
+                <Link href="/apprendre/cours/revoir" className="absolute right-0 top-0 flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
                   Voir tous <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -129,66 +139,17 @@ export default function ApprendrePage() {
               </div>
             </section>
 
-            {/* Un accompagnement structuré */}
-            <section className="bg-[#01509d] py-16">
-              <div className="max-w-[1280px] mx-auto px-6 lg:px-[100px]">
-                <h2 className="font-['Poppins'] font-bold text-2xl text-white mb-8">Un accompagnement structuré</h2>
-                <div className="grid md:grid-cols-3 gap-6">
-                  {ACCOMPAGNEMENT.map(({ icon: Icon, title, desc }) => (
-                    <div key={title} className="bg-white/10 rounded-2xl p-6 border border-white/20">
-                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="font-['Inter'] font-bold text-white mb-2">{title}</h3>
-                      <p className="text-sm text-white/70 leading-relaxed">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
             {/* Guides stratégiques */}
-            <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-12">
-              <div className="flex items-center justify-between mb-6">
+            <section className="max-w-[1280px] mx-auto px-6 lg:px-[100px] pb-12">
+              <div className="relative text-center mb-6">
                 <h2 className="font-['Poppins'] font-bold text-2xl text-[#140759]">Guides stratégiques</h2>
-                <Link href="/apprendre/guides" className="flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
+                <p className="text-sm text-[#808896] mt-1">Articles et ressources pour approfondir vos connaissances</p>
+                <Link href="/apprendre/guides" className="absolute right-0 top-0 flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
                   Voir tous <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {GUIDES.map((g) => <GuideCard key={g.href} {...g} />)}
-              </div>
-            </section>
-
-            {/* Des professeurs validés */}
-            <section className="bg-[#e3ecf8] py-16">
-              <div className="max-w-[1280px] mx-auto px-6 lg:px-[100px]">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="font-['Poppins'] font-bold text-2xl text-[#140759]">Des professeurs validés par l&apos;Académie</h2>
-                    <p className="text-sm text-[#808896] mt-1">Chaque formateur est certifié et suivi par notre équipe.</p>
-                  </div>
-                  <Link href="/professeur" className="flex items-center gap-1 text-sm font-semibold text-[#01509d] hover:underline">
-                    Devenir professeur <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {PROFESSEURS.map((p) => (
-                    <div key={p.name} className="bg-white rounded-2xl p-5 border border-[#e5e7eb] text-center shadow-sm hover:shadow-md transition-shadow">
-                      <div className="w-16 h-16 rounded-full bg-gray-200 mx-auto mb-3 overflow-hidden">
-                        <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
-                      </div>
-                      <p className="font-['Inter'] font-bold text-sm text-[#140759]">{p.name}</p>
-                      <p className="text-xs text-[#808896] mb-2">{p.role}</p>
-                      <div className="flex items-center justify-center gap-3 text-xs text-[#808896]">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" /> {p.courses} cours
-                        </span>
-                        <span className="text-yellow-500 font-bold">★ {p.rating}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </section>
           </>

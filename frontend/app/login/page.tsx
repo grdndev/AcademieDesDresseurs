@@ -11,13 +11,17 @@ export default function LoginPage() {
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        const role = email.includes("prof") ? "professeur" : "joueur";
+        const role = email.includes("admin") ? "admin"
+            : email.includes("prof") ? "professeur"
+            : "joueur";
         localStorage.setItem("mock_user", JSON.stringify({
             name: email.split("@")[0],
             email,
             role,
         }));
-        router.push(role === "professeur" ? "/espace-professeur" : "/espace-joueur");
+        if (role === "admin") router.push("/admin");
+        else if (role === "professeur") router.push("/espace-professeur");
+        else router.push("/espace-joueur");
     }
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -71,13 +75,19 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                        <p className="text-sm text-gray-500">
+                    <div className="mt-8 pt-6 border-t border-gray-100 space-y-4">
+                        <p className="text-center text-sm text-gray-500">
                             Pas encore de compte ?{" "}
                             <Link href="/register" className="text-primary font-bold hover:underline">
                                 Créer un compte
                             </Link>
                         </p>
+                        <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-500 space-y-1">
+                            <p className="font-semibold text-gray-600">Comptes de démo :</p>
+                            <p>• <span className="font-mono">joueur@demo.fr</span> → Espace Joueur</p>
+                            <p>• <span className="font-mono">prof@demo.fr</span> → Espace Professeur</p>
+                            <p>• <span className="font-mono">admin@demo.fr</span> → Dashboard Admin</p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../../components/Navbar";
-import { Search, ChevronDown, Star, Clock, Trophy, Globe } from "lucide-react";
+import { Search, ChevronDown, Star, Clock, Trophy, Globe, Calendar } from "lucide-react";
 
 /* ─── Types & data ─── */
 interface Coach {
@@ -13,6 +13,7 @@ interface Coach {
     duration: string; price: number;
     badges: string[];
     specialite: string; niveau: string;
+    nextSlot: string;
 }
 
 const FEATURED: Coach = {
@@ -21,16 +22,16 @@ const FEATURED: Coach = {
     bio: "Coach principal de l'Académie avec plus de 8 ans d'expérience en compétition. Spécialisé dans la préparation aux tournois majeurs et l'entraînement intensif avancé.",
     exp: 8, rating: 4.9, reviews: 127, duration: "90 min", price: 120,
     badges: ["Champion National 2023", "Top 8 Worlds 2023", "Session 90 min", "Prépa tournoi"],
-    specialite: "Tournois", niveau: "Avancé",
+    specialite: "Tournois", niveau: "Avancé", nextSlot: "Aujourd'hui 18h00",
 };
 
 const COACHES: Coach[] = [
-    { id: 1, name: "Thomas Lefèvre",  role: "Expert construction de decks", avatar: "/res/avatar2.png", bio: "Expert en construction de decks compétitifs et optimisation des stratégies de jeu.", exp: 5, rating: 4.8, reviews: 94,  duration: "60 min", price: 75,  badges: ["Top 32 Internationaux 2023"], specialite: "Deck building", niveau: "Intermédiaire" },
-    { id: 2, name: "Sophie Bernard",  role: "Spécialiste psychologie",       avatar: "/res/avatar3.png", bio: "Spécialiste de la psychologie mentale et de la preparation au tournoi pour les femmes.", exp: 4, rating: 4.7, reviews: 78,  duration: "60 min", price: 90,  badges: ["Préparer Toujours PRG"], specialite: "Psychologie", niveau: "Intermédiaire" },
-    { id: 3, name: "Lucas Dubois",    role: "Analyste méta",                 avatar: "/res/avatar1.png", bio: "Analyste méta avancé, spécialisé dans les décisions en conditions de format compétitif.", exp: 6, rating: 4.9, reviews: 112, duration: "60 min", price: 80,  badges: ["Top 8 Worlds 2023"], specialite: "Méta", niveau: "Avancé" },
-    { id: 4, name: "Marc Fontaine",   role: "Coach technique",               avatar: "/res/avatar2.png", bio: "Coach axé sur la maîtrise technique et la gestion du stress lors des matchs décisifs.", exp: 3, rating: 4.6, reviews: 65,  duration: "60 min", price: 85,  badges: ["Top 32 Internationaux 2023"], specialite: "Technique", niveau: "Débutant" },
-    { id: 5, name: "Emma Rousseau",   role: "Championne internationale",     avatar: "/res/avatar3.png", bio: "Championne internationale, experte en gestion de la fatigue, du stress et en performances en tournoi.", exp: 7, rating: 4.8, reviews: 103, duration: "90 min", price: 110, badges: ["Championne Toujours PRG"], specialite: "Tournois", niveau: "Avancé" },
-    { id: 6, name: "Julien Martin",   role: "Spécialiste début de partie",   avatar: "/res/avatar1.png", bio: "Analyste tactique de début de partie, spécialiste des deck-outs et du contre-stratégie.", exp: 2, rating: 4.5, reviews: 41,  duration: "60 min", price: 70,  badges: ["Top 8 Toujours 2023"], specialite: "Technique", niveau: "Débutant" },
+    { id: 1, name: "Thomas Lefèvre",  role: "Expert construction de decks", avatar: "/res/avatar2.png", bio: "Expert en construction de decks compétitifs et optimisation des stratégies de jeu.", exp: 5, rating: 4.8, reviews: 94,  duration: "60 min", price: 75,  badges: ["Top 32 Internationaux 2023"], specialite: "Deck building", niveau: "Intermédiaire", nextSlot: "Aujourd'hui 18h00" },
+    { id: 2, name: "Sophie Bernard",  role: "Spécialiste psychologie",       avatar: "/res/avatar3.png", bio: "Spécialiste de la psychologie mentale et de la preparation au tournoi pour les femmes.", exp: 4, rating: 4.7, reviews: 78,  duration: "60 min", price: 90,  badges: ["Préparer Toujours PRG"], specialite: "Psychologie", niveau: "Intermédiaire", nextSlot: "Aujourd'hui 19h30" },
+    { id: 3, name: "Lucas Dubois",    role: "Analyste méta",                 avatar: "/res/avatar1.png", bio: "Analyste méta avancé, spécialisé dans les décisions en conditions de format compétitif.", exp: 6, rating: 4.9, reviews: 112, duration: "60 min", price: 80,  badges: ["Top 8 Worlds 2023"], specialite: "Méta", niveau: "Avancé", nextSlot: "Demain 10h00" },
+    { id: 4, name: "Marc Fontaine",   role: "Coach technique",               avatar: "/res/avatar2.png", bio: "Coach axé sur la maîtrise technique et la gestion du stress lors des matchs décisifs.", exp: 3, rating: 4.6, reviews: 65,  duration: "60 min", price: 85,  badges: ["Top 32 Internationaux 2023"], specialite: "Technique", niveau: "Débutant", nextSlot: "Aujourd'hui 20h00" },
+    { id: 5, name: "Emma Rousseau",   role: "Championne internationale",     avatar: "/res/avatar3.png", bio: "Championne internationale, experte en gestion de la fatigue, du stress et en performances en tournoi.", exp: 7, rating: 4.8, reviews: 103, duration: "90 min", price: 110, badges: ["Championne Toujours PRG"], specialite: "Tournois", niveau: "Avancé", nextSlot: "Aujourd'hui 18h00" },
+    { id: 6, name: "Julien Martin",   role: "Spécialiste début de partie",   avatar: "/res/avatar1.png", bio: "Analyste tactique de début de partie, spécialiste des deck-outs et du contre-stratégie.", exp: 2, rating: 4.5, reviews: 41,  duration: "60 min", price: 70,  badges: ["Top 8 Toujours 2023"], specialite: "Technique", niveau: "Débutant", nextSlot: "Demain 14h00" },
 ];
 
 const NIVEAUX      = ["Tous les niveaux", "Débutant", "Intermédiaire", "Avancé"];
@@ -88,7 +89,7 @@ export default function CoachingPage() {
                 <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm overflow-hidden">
                     <div className="flex flex-col md:flex-row">
                         {/* Photo side */}
-                        <div className="relative md:w-56 h-48 md:h-auto flex-shrink-0 bg-[#eef5fb]">
+                        <div className="relative md:w-56 h-48 md:h-auto flex-shrink-0 bg-[#c7d9ef]">
                             <div className="absolute top-3 left-3 bg-[#dbb42b] text-[#140759] text-xs font-bold px-2.5 py-1 rounded-full z-10">
                                 Coach Premium
                             </div>
@@ -167,6 +168,12 @@ export default function CoachingPage() {
                                             {c.rating} · {c.reviews} avis
                                         </span>
                                         <span>{c.exp} ans d'expérience</span>
+                                    </div>
+
+                                    {/* Prochain créneau */}
+                                    <div className="flex items-center gap-1.5 text-xs bg-green-50 text-green-700 px-3 py-2 rounded-xl border border-green-100">
+                                        <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <span>Prochain créneau : <span className="font-bold">{c.nextSlot}</span></span>
                                     </div>
 
                                     {/* Duration + price */}

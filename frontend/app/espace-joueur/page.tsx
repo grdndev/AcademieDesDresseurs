@@ -12,14 +12,12 @@ import {
 /* ─── Constants ─── */
 
 const TABS = [
-    { id: "dashboard",  label: "Dashboard",        icon: LayoutDashboard },
-    { id: "cours",      label: "Mes cours",        icon: BookOpen },
-    { id: "decks",      label: "Mes decks",        icon: Layers },
-    { id: "commandes",  label: "Commandes",        icon: ShoppingBag },
-    { id: "wishlist",   label: "Wishlist",         icon: Heart },
-    { id: "wallet",     label: "Wallet",           icon: Wallet },
-    { id: "tournois",   label: "Tournois",         icon: Trophy },
-    { id: "profil",     label: "Profil",           icon: User },
+    { id: "dashboard",  label: "Dashboard",         icon: LayoutDashboard },
+    { id: "profil",     label: "Profil",            icon: User },
+    { id: "commandes",  label: "Commandes",         icon: ShoppingBag },
+    { id: "contenus",   label: "Contenus achetés",  icon: BookOpen },
+    { id: "decklists",  label: "Decklists",         icon: Layers },
+    { id: "wishlist",   label: "Wishlist",          icon: Heart },
 ];
 
 const STATS = [
@@ -86,20 +84,32 @@ const STATUS_STYLE: Record<string, string> = {
     "Terminé":   "bg-gray-100 text-[#808896]",
 };
 
+const NAV_CARDS = [
+    { id: "contenus",  label: "Mes cours",      desc: "Accédez à vos formations",     icon: BookOpen,   color: "bg-[#eef5fb] text-[#01509d]",  link: "Voir mes cours" },
+    { id: "commandes", label: "Mes commandes",   desc: "Suivez vos achats",             icon: ShoppingBag, color: "bg-purple-50 text-purple-600", link: "Voir commandes" },
+    { id: "decklists", label: "Mes decklists",   desc: "Gérez vos decks",               icon: Layers,     color: "bg-yellow-50 text-yellow-600", link: "Voir mes decks" },
+    { id: "wishlist",  label: "Ma wishlist",     desc: "Vos articles favoris",          icon: Heart,      color: "bg-pink-50 text-pink-600",     link: "Voir wishlist" },
+];
+
 /* ─── Tab: Dashboard ─── */
 
 function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
     return (
         <div className="space-y-8">
+            {/* Nav cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {STATS.map(({ label, value, color, icon: Icon }) => (
-                    <div key={label} className="bg-white rounded-2xl p-5 border border-[#e5e7eb] shadow-sm">
+                {NAV_CARDS.map(({ id, label, desc, icon: Icon, color, link }) => (
+                    <button key={id} onClick={() => setTab(id)}
+                        className="bg-white rounded-2xl p-5 border border-[#e5e7eb] shadow-sm text-left hover:shadow-md transition-shadow">
                         <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}>
                             <Icon className="w-5 h-5" />
                         </div>
-                        <p className="font-['Poppins'] font-bold text-2xl text-[#140759]">{value}</p>
-                        <p className="text-xs text-[#808896] mt-0.5">{label}</p>
-                    </div>
+                        <p className="font-['Inter'] font-bold text-sm text-[#140759] mb-0.5">{label}</p>
+                        <p className="text-xs text-[#808896] mb-3">{desc}</p>
+                        <span className="text-xs font-semibold text-[#01509d] hover:underline flex items-center gap-0.5">
+                            {link} <ChevronRight className="w-3 h-3" />
+                        </span>
+                    </button>
                 ))}
             </div>
 
@@ -107,17 +117,17 @@ function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-['Inter'] font-bold text-[#140759]">Continuer l&apos;apprentissage</h3>
-                    <button onClick={() => setTab("cours")} className="text-xs text-[#01509d] font-semibold hover:underline flex items-center gap-1">
+                    <button onClick={() => setTab("contenus")} className="text-xs text-[#01509d] font-semibold hover:underline flex items-center gap-1">
                         Voir tous <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                 </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {COURS_EN_COURS.map((c) => (
-                        <div key={c.title} className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${c.color} p-4 flex flex-col gap-3 min-h-[140px]`}>
+                <div className="grid sm:grid-cols-3 gap-4">
+                    {COURS_EN_COURS.slice(0, 3).map((c) => (
+                        <div key={c.title} className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${c.color} p-4 flex flex-col gap-3 min-h-[160px]`}>
                             <div className="absolute inset-0 opacity-20"><img src={c.img} alt="" className="w-full h-full object-cover" /></div>
                             <p className="relative font-['Inter'] font-bold text-xs text-white leading-snug">{c.title}</p>
                             <div className="relative mt-auto">
-                                <div className="flex justify-between mb-1.5"><span className="text-[10px] text-white/70">{c.progress}%</span></div>
+                                <div className="flex justify-between mb-1.5"><span className="text-[10px] text-white/70">Progression {c.progress}%</span></div>
                                 <div className="h-1.5 bg-white/20 rounded-full mb-3"><div className="h-full bg-white rounded-full" style={{ width: `${c.progress}%` }} /></div>
                                 <Link href="/apprendre" className="flex items-center justify-center gap-1.5 h-8 w-full bg-white/20 hover:bg-white/30 border border-white/30 text-white text-xs font-bold rounded-xl transition-colors">
                                     <Play className="w-3 h-3" /> Reprendre
@@ -128,53 +138,50 @@ function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
                 </div>
             </div>
 
-            {/* Commandes récentes */}
-            <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
-                    <h3 className="font-['Inter'] font-bold text-[#140759]">Commandes récentes</h3>
-                    <button onClick={() => setTab("commandes")} className="text-xs text-[#01509d] font-semibold hover:underline flex items-center gap-1">
-                        Tout voir <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+            {/* Commandes récentes + Mes decklists */}
+            <div className="grid lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">
+                        <h3 className="font-['Inter'] font-bold text-[#140759] text-sm">Commandes récentes</h3>
+                        <button onClick={() => setTab("commandes")} className="text-xs text-[#01509d] font-semibold hover:underline flex items-center gap-1">
+                            Tout voir <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                    <ul>
+                        {ALL_ORDERS.slice(0, 4).map((o) => (
+                            <li key={o.id} className="flex items-center justify-between px-5 py-3 border-b border-[#e5e7eb] last:border-0">
+                                <div>
+                                    <p className="text-xs font-semibold text-[#140759]">{o.name}</p>
+                                    <p className="text-[10px] text-[#808896]">{o.date}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-[#140759]">{o.price}€</span>
+                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLE[o.status] ?? ""}`}>{o.status}</span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                <table className="w-full">
-                    <thead><tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
-                        {["Produit", "Type", "Date", "Prix", "Statut"].map((h) => (
-                            <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-[#808896]">{h}</th>
-                        ))}
-                    </tr></thead>
-                    <tbody>
-                        {ALL_ORDERS.slice(0, 3).map((o) => (
-                            <tr key={o.id} className="border-b border-[#e5e7eb] last:border-0 hover:bg-[#f9fafb]">
-                                <td className="px-6 py-4 text-sm font-semibold text-[#140759]">{o.name}</td>
-                                <td className="px-6 py-4 text-xs text-[#808896]">{o.type}</td>
-                                <td className="px-6 py-4 text-xs text-[#808896]">{o.date}</td>
-                                <td className="px-6 py-4 text-sm font-bold text-[#140759]">{o.price}€</td>
-                                <td className="px-6 py-4"><span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLE[o.status] ?? ""}`}>{o.status}</span></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
 
-            {/* Decklists */}
-            <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
-                    <h3 className="font-['Inter'] font-bold text-[#140759]">Mes decklists</h3>
-                    <button onClick={() => setTab("decks")} className="text-xs text-[#01509d] font-semibold hover:underline flex items-center gap-1">
-                        Voir tout <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">
+                        <h3 className="font-['Inter'] font-bold text-[#140759] text-sm">Mes decklists</h3>
+                        <button onClick={() => setTab("decklists")} className="text-xs text-[#01509d] font-semibold hover:underline flex items-center gap-1">
+                            Voir tout <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                    <ul>
+                        {DECKLISTS_FULL.slice(0, 4).map((d) => (
+                            <li key={d.id} className="flex items-center justify-between px-5 py-3 border-b border-[#e5e7eb] last:border-0">
+                                <div>
+                                    <p className="text-xs font-semibold text-[#140759]">{d.name}</p>
+                                    <p className="text-[10px] text-[#808896]">{d.cards} cartes · {d.format}</p>
+                                </div>
+                                <Link href="/sequiper/builder" className="text-xs text-[#01509d] font-semibold hover:underline">Modifier</Link>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                <ul>
-                    {DECKLISTS_FULL.slice(0, 3).map((d) => (
-                        <li key={d.id} className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] last:border-0">
-                            <div>
-                                <p className="text-sm font-semibold text-[#140759]">{d.name}</p>
-                                <p className="text-xs text-[#808896]">{d.cards} cartes · {d.format} · {d.updated}</p>
-                            </div>
-                            <Link href="/sequiper/builder" className="text-xs text-[#01509d] font-semibold hover:underline">Modifier</Link>
-                        </li>
-                    ))}
-                </ul>
             </div>
 
             {/* Recommandé */}
@@ -182,7 +189,7 @@ function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
                 <h3 className="font-['Inter'] font-bold text-[#140759] mb-4">Recommandé pour vous</h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {RECOMMANDES.map((r) => (
-                        <Link key={r.title} href={r.href} className={`${r.color} rounded-2xl p-5 flex flex-col gap-3 min-h-[110px] hover:opacity-90 transition-opacity`}>
+                        <Link key={r.title} href={r.href} className={`${r.color} rounded-2xl p-5 flex flex-col gap-3 min-h-[120px] hover:opacity-90 transition-opacity`}>
                             <p className="font-['Inter'] font-bold text-sm text-white leading-snug">{r.title}</p>
                             <div className="mt-auto flex items-center justify-between">
                                 <span className="font-['Poppins'] font-bold text-white">{r.price}€</span>
@@ -196,7 +203,7 @@ function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
     );
 }
 
-/* ─── Tab: Mes cours (Contenus achetés) ─── */
+/* ─── Tab: Contenus achetés ─── */
 
 function CoursTab() {
     const [filter, setFilter] = useState("Tous");
@@ -622,34 +629,46 @@ function PlaceholderTab({ label }: { label: string }) {
 export default function EspaceJoueurPage() {
     const [tab, setTab] = useState("dashboard");
 
+    const TITLE_MAP: Record<string, string> = {
+        dashboard:  "Tableau de bord",
+        profil:     "Mon Profil",
+        commandes:  "Mes Commandes",
+        contenus:   "Contenus achetés",
+        decklists:  "Mes Decklists",
+        wishlist:   "Ma Wishlist",
+    };
+
     const content: Record<string, React.ReactNode> = {
         dashboard: <DashboardTab setTab={setTab} />,
-        cours:     <CoursTab />,
-        decks:     <DecksTab />,
+        contenus:  <CoursTab />,
+        decklists: <DecksTab />,
         commandes: <CommandesTab />,
         wishlist:  <WishlistTab />,
-        wallet:    <WalletTab />,
         profil:    <ProfilTab />,
-        tournois:  <PlaceholderTab label="Tournois" />,
     };
 
     return (
         <div className="min-h-screen bg-[#f9fafb]">
-            <Navbar /> 
+            <Navbar />
             <div className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-10">
                 <div className="flex gap-8">
 
                     {/* Sidebar */}
                     <aside className="w-56 flex-shrink-0">
-                        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm sticky top-6">
-                            <div className="px-5 py-5 border-b border-[#e5e7eb]">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#01509d] to-[#140759] flex items-center justify-center mb-3">
-                                    <span className="text-white font-bold text-lg">J</span>
+                        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm sticky top-6 flex flex-col">
+                            {/* User header */}
+                            <div className="px-5 py-5 border-b border-[#e5e7eb] flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#01509d] to-[#140759] flex items-center justify-center flex-shrink-0">
+                                    <span className="text-white font-bold">J</span>
                                 </div>
-                                <p className="font-['Inter'] font-bold text-sm text-[#140759]">Académie des Dresseurs</p>
-                                <p className="text-xs text-[#808896]">Joueur Académie</p>
+                                <div className="min-w-0">
+                                    <p className="font-['Inter'] font-bold text-xs text-[#140759] truncate">Jean Dupont</p>
+                                    <p className="text-[10px] text-[#808896]">Joueur Académie</p>
+                                </div>
                             </div>
-                            <nav className="py-2">
+
+                            {/* Nav */}
+                            <nav className="py-2 flex-1">
                                 {TABS.map(({ id, label, icon: Icon }) => (
                                     <button key={id} onClick={() => setTab(id)}
                                         className={`w-full flex items-center gap-3 px-5 py-3 text-sm transition-colors ${tab === id ? "bg-[#eef5fb] text-[#01509d] font-bold border-r-2 border-[#01509d]" : "text-[#808896] hover:text-[#140759] hover:bg-gray-50"}`}>
@@ -658,14 +677,33 @@ export default function EspaceJoueurPage() {
                                     </button>
                                 ))}
                             </nav>
+
+                            {/* Footer actions */}
+                            <div className="border-t border-[#e5e7eb] py-2">
+                                <Link href="/panier"
+                                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-[#808896] hover:text-[#140759] hover:bg-gray-50 transition-colors">
+                                    <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+                                    Mon panier
+                                </Link>
+                                <Link href="/espace-professeur"
+                                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-[#01509d] font-semibold hover:bg-[#eef5fb] transition-colors">
+                                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                                    Espace Professeur
+                                </Link>
+                            </div>
                         </div>
                     </aside>
 
                     {/* Contenu */}
                     <div className="flex-1 min-w-0">
-                        <h1 className="font-['Poppins'] font-bold text-2xl text-[#140759] mb-6">
-                            {TABS.find((t) => t.id === tab)?.label}
-                        </h1>
+                        <div className="mb-6">
+                            <h1 className="font-['Poppins'] font-bold text-2xl text-[#140759]">
+                                {TITLE_MAP[tab] ?? tab}
+                            </h1>
+                            {tab === "dashboard" && (
+                                <p className="text-sm text-[#808896] mt-1">Bienvenue dans votre espace joueur.</p>
+                            )}
+                        </div>
                         {content[tab]}
                     </div>
                 </div>

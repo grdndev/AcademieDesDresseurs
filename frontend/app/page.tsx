@@ -5,7 +5,7 @@ import Link from "next/link";
 const STATS = [
   { value: "+90",  label: "Professeurs" },
   { value: "24/7", label: "Coaching" },
-  { value: "+9K",  label: "Élèves" },
+  { value: "+9K",  label: "Cartes" },
   { value: "98%",  label: "Succès" },
 ];
 
@@ -15,7 +15,7 @@ const PARCOURS = [
     iconBg: "bg-[#01509d]/10",
     iconColor: "text-[#01509d]",
     title: "Débutant",
-    desc: "Des masterclass, des guides et des replays stratégiques pour assimiler les bases du JCC Pokémon.",
+    desc: "Des masterclass, des guides et des replays stratégiques pour assimiler les bases et les mécaniques complexes.",
     cta: "Découvrir les cours",
     href: "/apprendre",
   },
@@ -33,7 +33,7 @@ const PARCOURS = [
     iconBg: "bg-green-500/10",
     iconColor: "text-green-600",
     title: "Parent",
-    desc: "Boutique de cartes à l'unité, decks préconstruits et accessoires pour accompagner votre enfant.",
+    desc: "Boutique de cartes à l'unité, decks préconstruits et accessoires. Conversion automatique de vos listes en panier.",
     cta: "Ouvrir la boutique",
     href: "/sequiper",
   },
@@ -85,8 +85,8 @@ export default function Home() {
         </section>
 
         {/* Trouver votre parcours */}
-        <section className="bg-[#e3ecf8] py-20">
-          <div className="max-w-[1280px] mx-auto px-6 lg:px-[100px]">
+        <section className="bg-[#bed2e9] py-20">
+          <div className="max-w-[1600px] mx-auto px-6 lg:px-[60px]">
             <div className="mb-12">
               <h2 className="font-['Poppins'] font-bold text-[40px] leading-tight text-[#140759]">
                 Trouver votre parcours
@@ -98,7 +98,7 @@ export default function Home() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {PARCOURS.map((p) => (
-                <div key={p.title} className="bg-[#fdfcfe] rounded-3xl p-8 flex flex-col gap-5">
+                <div key={p.title} className="bg-[#fdfcfe] rounded-3xl p-8 flex flex-col gap-5 min-h-[420px]">
                   <div className={`w-14 h-14 rounded-2xl ${p.iconBg} flex items-center justify-center`}>
                     <p.icon className={`w-6 h-6 ${p.iconColor}`} />
                   </div>
