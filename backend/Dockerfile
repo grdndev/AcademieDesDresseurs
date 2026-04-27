@@ -1,20 +1,17 @@
-# Image Node.js LTS légère
 FROM node:20-alpine
 
-# Dossier de travail dans le conteneur
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
-# Copier les fichiers de dépendances
 COPY package*.json ./
+COPY prisma ./prisma/
 
-# Installer uniquement les dépendances de prod
-RUN npm install --omit=dev
+RUN npm install
+RUN npx prisma generate
 
-# Copier le reste du projet
 COPY . .
 
-# Port exposé (adapte si ton app utilise un autre port)
 EXPOSE 5001
 
-# Commande de démarrage
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node index.js"]

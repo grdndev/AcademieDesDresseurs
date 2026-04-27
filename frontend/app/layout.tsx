@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartProvider } from "./context/cart-provider";
 import { Poppins, Inter } from "next/font/google";
 import Footer from "./components/Footer";
+import CookieBanner from "./components/CookieBanner";
 
 export const metadata: Metadata = {
   title: "Académie des Dresseurs",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <CartProvider>
           {children}
           <Footer />
+          <CookieBanner />
         </CartProvider>
       </body>
     </html>

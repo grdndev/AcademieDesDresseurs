@@ -8,17 +8,48 @@ import { GraduationCap, Mail, Lock, ArrowRight } from "lucide-react";
 export default function LoginPage() {
     const router = useRouter()
     const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        const role = email.includes("prof") ? "professeur" : "joueur";
-        localStorage.setItem("mock_user", JSON.stringify({
-            name: email.split("@")[0],
-            email,
-            role,
-        }));
-        router.push(role === "professeur" ? "/espace-professeur" : "/espace-joueur");
+        setError("")
+        setLoading(true)
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                setError(data.error ?? "Identifiants invalides")
+                return
+            }
+
+            localStorage.setItem("accessToken", data.accessToken)
+            localStorage.setItem("refreshToken", data.refreshToken)
+            localStorage.setItem("user", JSON.stringify(data.user))
+
+            const role = data.user.role
+            if (role === "PROFESSOR") {
+                router.push("/espace-professeur")
+            } else if (["ADMIN", "SUPER_ADMIN"].includes(role)) {
+                router.push("/admin")
+            } else {
+                router.push("/espace-joueur")
+            }
+        } catch {
+            setError("Impossible de contacter le serveur")
+        } finally {
+            setLoading(false)
+        }
     }
+
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="max-w-md w-full">
@@ -45,6 +76,7 @@ export default function LoginPage() {
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
                                     placeholder="nom@exemple.com"
+                                    required
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
                                 />
                             </div>
@@ -59,15 +91,26 @@ export default function LoginPage() {
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    required
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
                                 />
                             </div>
                         </div>
 
-                        <button type="submit" className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 group">
-                            Se connecter
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        {error && (
+                            <p className="text-sm text-red-600 font-medium">{error}</p>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-60"
+                        >
+                            {loading ? "Connexion..." : "Se connecter"}
+                            {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                         </button>
                     </form>
 

@@ -15,14 +15,22 @@ services:
     env_file:
       - ./backend/.env.docker
     depends_on:
-      - mongo
+      postgres:
+        condition: service_healthy
 
-  mongo:
-    image: mongo:7
-    ports:
-      - "27017:27017"
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: academie
+      POSTGRES_PASSWORD: academie
+      POSTGRES_DB: academie_db
     volumes:
-      - mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U academie -d academie_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  mongo_data:
+  postgres_data:

@@ -1,109 +1,117 @@
-require('dotenv').config();
-const express = require('express');
-const connectDB = require('./config/db');
+'use strict';
 
-// Import routes
-const usersRoutes = require('./routes/users');
-const cardsRoutes = require('./routes/cards');
-const decksRoutes = require('./routes/decks');
-const accessoriesRoutes = require('./routes/accessories');
-const ordersRoutes = require('./routes/orders');
-const paymentRoutes = require('./routes/payment');
+require('dotenv').config();
+
+const express  = require('express');
+const prisma   = require('./lib/prisma');
+
+const { securityHeaders, sanitizeResponses } = require('./middleware/security');
+const { sanitizeInputs, enforceLengths }     = require('./middleware/sanitize');
+const { apiLimiter }                         = require('./middleware/rateLimiter');
+const { logger }                             = require('./services/logger');
+
+const authRoutes = require('./routes/auth');
+const gdprRoutes = require('./routes/gdpr');
 
 const app = express();
 
-// Proxy support (important behind OVH reverse proxy)
+// ─── PROXY (OVH / Nginx) ─────────────────────────────────────────────────────
+
 if (String(process.env.TRUST_PROXY).toLowerCase() === 'true') {
   app.set('trust proxy', 1);
 }
 
-// Middleware
-app.use((req, res, next) => {
-  // STRIPE : exclusion pour obtenir le rawbody
-  if (req.originalUrl === '/api/payment/webhook') {
-    next();
-  } else {
-    express.json()(req, res, next);
-  }
-});
-app.use(express.urlencoded({ extended: true }));
+// ─── SÉCURITÉ GLOBALE ─────────────────────────────────────────────────────────
 
-// CORS (configurable via CORS_ORIGINS env, comma-separated)
+app.use(securityHeaders);    // helmet (CSP, HSTS, X-Frame-Options, etc.)
+app.use(sanitizeResponses);  // filtre les champs sensibles de toutes les réponses JSON
+app.use(apiLimiter);         // rate limit global (200 req/min par IP)
+
+// ─── BODY PARSING ─────────────────────────────────────────────────────────────
+
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/payment/webhook') return next();
+  express.json({ limit: '1mb' })(req, res, next);
+});
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// ─── SANITISATION DES INPUTS ─────────────────────────────────────────────────
+
+app.use(enforceLengths);   // refuse les payloads avec champs trop longs
+app.use(sanitizeInputs);   // strip HTML de tous les body/query
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+
 const allowedOrigins = (process.env.CORS_ORIGINS || '*')
   .split(',')
-  .map((origin) => origin.trim())
+  .map(o => o.trim())
   .filter(Boolean);
 
 app.use((req, res, next) => {
-  const requestOrigin = req.headers.origin;
+  const origin   = req.headers.origin;
   const allowAll = allowedOrigins.includes('*');
-  const isAllowedOrigin = requestOrigin && allowedOrigins.includes(requestOrigin);
 
   if (allowAll) {
     res.header('Access-Control-Allow-Origin', '*');
-  } else if (isAllowedOrigin) {
-    res.header('Access-Control-Allow-Origin', requestOrigin);
+  } else if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Vary', 'Origin');
+  } else if (origin && !allowAll) {
+    logger.warn({ message: 'CORS blocked', origin, path: req.originalUrl });
+    return res.status(403).json({ error: 'Origin non autorisée' });
   }
 
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
 
-  // Credentials are only safe with explicit origins (not with *)
-  if (!allowAll && isAllowedOrigin) {
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-
-  if (!allowAll && requestOrigin && !isAllowedOrigin) {
-    return res.status(403).json({ error: 'Origin not allowed by CORS policy' });
-  }
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
 
-// Routes
-app.use('/api/users', usersRoutes);
-app.use('/api/cards', cardsRoutes);
-app.use('/api/decks', decksRoutes);
-app.use('/api/accessories', accessoriesRoutes);
-app.use('/api/orders', ordersRoutes);
-app.use('/api/payment', paymentRoutes);
+// ─── ROUTES ───────────────────────────────────────────────────────────────────
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/gdpr', gdprRoutes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+// TODO: migrer vers Prisma
+// app.use('/api/users',       require('./routes/users'));
+// app.use('/api/cards',       require('./routes/cards'));
+// app.use('/api/decks',       require('./routes/decks'));
+// app.use('/api/accessories', require('./routes/accessories'));
+// app.use('/api/orders',      require('./routes/orders'));
+// app.use('/api/payment',     require('./routes/payment'));
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error'
-  });
-});
+// ─── HEALTH ───────────────────────────────────────────────────────────────────
 
-// Start server
-const startServer = async () => {
+app.get('/health', async (req, res) => {
   try {
-    await connectDB();
-    console.log('✅ Database connected successfully');
-  } catch (dbError) {
-    console.error('⚠️ Database connection failed:', dbError.message);
-    console.log('🚀 Starting server in standalone mode (some features will be unavailable)...');
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'OK', db: 'connected', timestamp: new Date() });
+  } catch {
+    res.status(503).json({ status: 'ERROR', db: 'disconnected', timestamp: new Date() });
   }
+});
 
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-};
+// ─── 404 / ERREUR ─────────────────────────────────────────────────────────────
 
-startServer();
+app.use((req, res) => res.status(404).json({ error: 'Route introuvable' }));
+
+app.use((err, req, res, next) => {
+  logger.error({ message: 'Unhandled error', error: err.message, stack: err.stack, path: req.originalUrl });
+  res.status(err.status || 500).json({ error: err.message || 'Erreur serveur' });
+});
+
+// ─── START ────────────────────────────────────────────────────────────────────
+
+const PORT = process.env.PORT || 5001;
+
+app.listen(PORT, async () => {
+  try {
+    await prisma.$connect();
+    logger.info('✅ PostgreSQL connecté');
+  } catch (err) {
+    logger.error(`⚠️ Connexion DB échouée : ${err.message}`);
+  }
+  logger.info(`🚀 Serveur démarré sur le port ${PORT} (${process.env.NODE_ENV ?? 'development'})`);
+});
