@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { apiGet } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -77,6 +78,26 @@ const TRANSACTIONS = [
     { label: "Crédit parrainage",          amount: +10, date: "1 Jan 2024" },
 ];
 
+type ApiOrder  = { id: string; status: string; total: number; date: string; items: { name: string; type: string }[] };
+type UIOrder   = { id: string; name: string; type: string; price: number; date: string; status: string };
+type DashUser  = { id?: string; firstName?: string; lastName?: string; pseudo?: string; email?: string; preferences?: { level?: string } };
+
+const ORDER_STATUS_FR: Record<string, string> = {
+    PENDING: "En cours", CONFIRMED: "En cours", PROCESSING: "En cours",
+    SHIPPED: "En cours", DELIVERED: "Livré", CANCELLED: "Terminé", REFUNDED: "Terminé",
+};
+
+function mapOrder(o: ApiOrder): UIOrder {
+    return {
+        id:     o.id,
+        name:   o.items[0]?.name ?? 'Commande',
+        type:   o.items[0]?.type ?? '',
+        price:  o.total,
+        date:   new Date(o.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        status: ORDER_STATUS_FR[o.status] ?? o.status,
+    };
+}
+
 const STATUS_STYLE: Record<string, string> = {
     "Livré":     "bg-green-50 text-green-600",
     "Actif":     "bg-[#eef5fb] text-[#01509d]",
@@ -93,7 +114,7 @@ const NAV_CARDS = [
 
 /* ─── Tab: Dashboard ─── */
 
-function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
+function DashboardTab({ setTab, recentOrders }: { setTab: (t: string) => void; recentOrders: UIOrder[] }) {
     return (
         <div className="space-y-8">
             {/* Nav cards */}
@@ -148,7 +169,7 @@ function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
                         </button>
                     </div>
                     <ul>
-                        {ALL_ORDERS.slice(0, 4).map((o) => (
+                        {recentOrders.slice(0, 4).map((o) => (
                             <li key={o.id} className="flex items-center justify-between px-5 py-3 border-b border-[#e5e7eb] last:border-0">
                                 <div>
                                     <p className="text-xs font-semibold text-[#140759]">{o.name}</p>
@@ -338,14 +359,14 @@ function DecksTab() {
 
 const PER_PAGE = 5;
 
-function CommandesTab() {
+function CommandesTab({ orders }: { orders: UIOrder[] }) {
     const [search, setSearch] = useState("");
     const [page, setPage]     = useState(1);
 
     const filtered = useMemo(() => {
         const q = search.toLowerCase();
-        return ALL_ORDERS.filter((o) => !q || o.name.toLowerCase().includes(q) || o.id.toLowerCase().includes(q));
-    }, [search]);
+        return orders.filter((o) => !q || o.name.toLowerCase().includes(q) || o.id.toLowerCase().includes(q));
+    }, [orders, search]);
 
     const totalPages = Math.ceil(filtered.length / PER_PAGE);
     const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -449,7 +470,7 @@ function WalletTab() {
 
 /* ─── Tab: Profil ─── */
 
-function ProfilTab() {
+function ProfilTab({ user }: { user: DashUser | null }) {
     const inputClass = "w-full px-4 py-2.5 text-sm text-[#140759] border border-[#e5e7eb] rounded-xl bg-white outline-none focus:border-[#01509d] focus:ring-2 focus:ring-[#01509d]/10 transition-colors";
     const labelClass = "block text-xs font-semibold text-[#140759] mb-1.5";
     const [settings, setSettings] = useState({ darkMode: false, newsletter: true, notifications: true });
@@ -460,11 +481,11 @@ function ProfilTab() {
             <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm p-6">
                 <h3 className="font-['Poppins'] font-bold text-base text-[#140759] mb-5">Informations personnelles</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
-                    <div><label className={labelClass}>Prénom</label><input type="text" defaultValue="Jean" className={inputClass} /></div>
-                    <div><label className={labelClass}>Nom</label><input type="text" defaultValue="Dupont" className={inputClass} /></div>
-                    <div><label className={labelClass}>Email</label><input type="email" defaultValue="jean@email.com" className={inputClass} /></div>
+                    <div><label className={labelClass}>Prénom</label><input type="text" defaultValue={user?.firstName ?? ''} className={inputClass} /></div>
+                    <div><label className={labelClass}>Nom</label><input type="text" defaultValue={user?.lastName ?? ''} className={inputClass} /></div>
+                    <div><label className={labelClass}>Email</label><input type="email" defaultValue={user?.email ?? ''} className={inputClass} /></div>
                     <div><label className={labelClass}>Téléphone</label><input type="tel" defaultValue="+33 6 00 00 00 00" className={inputClass} /></div>
-                    <div className="sm:col-span-2"><label className={labelClass}>Pseudo</label><input type="text" defaultValue="DresseurElite" className={inputClass} /></div>
+                    <div className="sm:col-span-2"><label className={labelClass}>Pseudo</label><input type="text" defaultValue={user?.pseudo ?? ''} className={inputClass} /></div>
                 </div>
                 <button className="mt-5 h-10 px-5 bg-[#01509d] hover:bg-[#014080] text-white font-['Inter'] font-bold text-sm rounded-xl transition-colors">
                     Enregistrer les modifications
@@ -628,6 +649,20 @@ function PlaceholderTab({ label }: { label: string }) {
 
 export default function EspaceJoueurPage() {
     const [tab, setTab] = useState("dashboard");
+    const [dashData, setDashData]   = useState<{ user: DashUser; stats: { formationsCount: number; ordersCount: number }; recentOrders: ApiOrder[] } | null>(null);
+    const [allOrders, setAllOrders] = useState<ApiOrder[]>([]);
+
+    useEffect(() => {
+        apiGet<{ user: DashUser; stats: { formationsCount: number; ordersCount: number }; recentOrders: ApiOrder[] }>('/users/me/dashboard').then(setDashData).catch(() => {});
+        apiGet<ApiOrder[]>('/users/me/orders').then(setAllOrders).catch(() => {});
+    }, []);
+
+    const mappedRecent = dashData ? dashData.recentOrders.map(mapOrder) : ALL_ORDERS.slice(0, 4);
+    const mappedOrders = allOrders.length ? allOrders.map(mapOrder) : ALL_ORDERS;
+    const userName     = dashData
+        ? (`${dashData.user.firstName ?? ''} ${dashData.user.lastName ?? ''}`.trim() || dashData.user.pseudo || 'Joueur')
+        : 'Chargement…';
+    const userInitial  = userName.charAt(0).toUpperCase();
 
     const TITLE_MAP: Record<string, string> = {
         dashboard:  "Tableau de bord",
@@ -639,12 +674,12 @@ export default function EspaceJoueurPage() {
     };
 
     const content: Record<string, React.ReactNode> = {
-        dashboard: <DashboardTab setTab={setTab} />,
+        dashboard: <DashboardTab setTab={setTab} recentOrders={mappedRecent} />,
         contenus:  <CoursTab />,
         decklists: <DecksTab />,
-        commandes: <CommandesTab />,
+        commandes: <CommandesTab orders={mappedOrders} />,
         wishlist:  <WishlistTab />,
-        profil:    <ProfilTab />,
+        profil:    <ProfilTab user={dashData?.user ?? null} />,
     };
 
     return (
@@ -659,10 +694,10 @@ export default function EspaceJoueurPage() {
                             {/* User header */}
                             <div className="px-5 py-5 border-b border-[#e5e7eb] flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#01509d] to-[#140759] flex items-center justify-center flex-shrink-0">
-                                    <span className="text-white font-bold">J</span>
+                                    <span className="text-white font-bold">{userInitial}</span>
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-['Inter'] font-bold text-xs text-[#140759] truncate">Jean Dupont</p>
+                                    <p className="font-['Inter'] font-bold text-xs text-[#140759] truncate">{userName}</p>
                                     <p className="text-[10px] text-[#808896]">Joueur Académie</p>
                                 </div>
                             </div>

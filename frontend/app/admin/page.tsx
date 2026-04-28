@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 import {
     LayoutDashboard, Users, ShoppingBag, ShoppingCart, UserCheck,
@@ -97,12 +98,26 @@ function RevenueChart() {
 
 /* ─── Dashboard tab ─── */
 function DashboardTab() {
+    const [apiStats, setApiStats] = useState<{ users: number; professors: number; orders: number; contents: number } | null>(null);
+
+    useEffect(() => {
+        apiGet<{ users: number; professors: number; orders: number; contents: number }>('/admin/stats')
+            .then(setApiStats)
+            .catch(() => {});
+    }, []);
+
+    const displayStats = STATS.map((s, i) => {
+        if (!apiStats) return s;
+        const vals = [apiStats.users, apiStats.professors, apiStats.contents, apiStats.orders];
+        return { ...s, value: vals[i].toLocaleString('fr-FR') };
+    });
+
     return (
         <div className="space-y-6">
 
             {/* 4 stats */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {STATS.map(({ icon: Icon, iconBg, iconColor, label, value, delta, up }) => (
+                {displayStats.map(({ icon: Icon, iconBg, iconColor, label, value, delta, up }) => (
                     <div key={label} className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm p-5">
                         <div className="flex items-start justify-between mb-3">
                             <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>

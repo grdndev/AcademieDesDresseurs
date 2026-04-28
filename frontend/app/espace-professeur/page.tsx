@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet } from "../lib/apiClient";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -53,6 +54,10 @@ const SESSIONS = [
     { name: "Alex Mirous",   date: "18 avr", heure: "16h30" },
 ];
 
+type ProfStats   = { totalContents: number; ratingAvg: number; totalSessions: number };
+type ProfContent = { id: string; title: string; type: string; statut: string; level: string; date: string; rating: number; ventes: number | null };
+type ProfUser    = { firstName?: string; lastName?: string; pseudo?: string; professorProfile?: { isVerified?: boolean } };
+
 const STATUS_STYLE: Record<string, string> = {
     "Publié":   "bg-green-50 text-green-600",
     "En cours": "bg-[#eef5fb] text-[#01509d]",
@@ -79,11 +84,22 @@ function Sparkline({ points }: { points: number[] }) {
 
 /* ─── Tab: Dashboard ─── */
 
-function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
+function DashboardTab({ setTab, profStats, recentContents }: { setTab: (t: string) => void; profStats: ProfStats | null; recentContents: ProfContent[] }) {
+    const displayStats = profStats ? [
+        STATS[0],
+        { ...STATS[1], value: String(profStats.totalSessions) },
+        { ...STATS[2], value: String(profStats.totalContents) },
+        { ...STATS[3], value: `${Number(profStats.ratingAvg).toFixed(1)}/5` },
+    ] : STATS;
+
+    const displayContenus = recentContents.length
+        ? recentContents.map((c) => ({ title: c.title, type: c.type, eleves: c.ventes ?? 0, rating: c.rating, status: c.statut }))
+        : CONTENUS_RECENTS;
+
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {STATS.map(({ label, value, icon: Icon, color }) => (
+                {displayStats.map(({ label, value, icon: Icon, color }) => (
                     <div key={label} className="bg-white rounded-2xl p-5 border border-[#e5e7eb] shadow-sm">
                         <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}><Icon className="w-5 h-5" /></div>
                         <p className="font-['Poppins'] font-bold text-2xl text-[#140759]">{value}</p>
@@ -118,7 +134,7 @@ function DashboardTab({ setTab }: { setTab: (t: string) => void }) {
                             ))}
                         </tr></thead>
                         <tbody>
-                            {CONTENUS_RECENTS.map((c, i) => (
+                            {displayContenus.map((c, i) => (
                                 <tr key={i} className="border-b border-[#e5e7eb] last:border-0 hover:bg-[#f9fafb]">
                                     <td className="px-5 py-4 text-sm font-semibold text-[#140759] max-w-[180px] truncate">{c.title}</td>
                                     <td className="px-5 py-4 text-xs text-[#808896]">{c.type}</td>
@@ -276,12 +292,21 @@ const STATUT_DOT: Record<string, string> = {
     "Brouillon":  "bg-gray-400",
 };
 
-function MesContenus() {
+function MesContenus({ contenus }: { contenus: ProfContent[] }) {
     const [typeFilter,   setTypeFilter]   = useState("Tous les types");
     const [statutFilter, setStatutFilter] = useState("Tous les statuts");
     const [search, setSearch] = useState("");
 
-    const filtered = MES_CONTENUS.filter((c) => {
+    const sourceData = contenus.length ? contenus.map((c) => ({
+        title:  c.title,
+        sub:    c.level,
+        type:   c.type,
+        statut: c.statut,
+        date:   c.date ? new Date(c.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+        ventes: c.ventes,
+    })) : MES_CONTENUS;
+
+    const filtered = sourceData.filter((c) => {
         const q = search.toLowerCase();
         return (
             (typeFilter === "Tous les types" || c.type === typeFilter) &&
@@ -371,11 +396,22 @@ function PlaceholderTab({ label }: { label: string }) {
 
 export default function EspaceProfesseurPage() {
     const [tab, setTab] = useState("dashboard");
+    const [profData, setProfData] = useState<{ user: ProfUser; stats: ProfStats; recentContents: ProfContent[] } | null>(null);
+
+    useEffect(() => {
+        apiGet<{ user: ProfUser; stats: ProfStats; recentContents: ProfContent[] }>('/users/me/professor-dashboard')
+            .then(setProfData)
+            .catch(() => {});
+    }, []);
+
+    const profName    = profData ? (`${profData.user.firstName ?? ''} ${profData.user.lastName ?? ''}`.trim() || profData.user.pseudo || 'Professeur') : 'Chargement…';
+    const profInitial = profName.charAt(0).toUpperCase();
+    const isVerified  = profData?.user.professorProfile?.isVerified ?? false;
 
     const content: Record<string, React.ReactNode> = {
-        dashboard:      <DashboardTab setTab={setTab} />,
+        dashboard:      <DashboardTab setTab={setTab} profStats={profData?.stats ?? null} recentContents={profData?.recentContents ?? []} />,
         profil:         <ProfilTab setTab={setTab} />,
-        contenus:       <MesContenus />,
+        contenus:       <MesContenus contenus={profData?.recentContents ?? []} />,
         creer:          <CreerContenu setTab={setTab} />,
         disponibilites: <Disponibilites />,
         revenus:        <VentesRevenus />,
@@ -393,10 +429,10 @@ export default function EspaceProfesseurPage() {
                         <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden shadow-sm sticky top-6">
                             <div className="px-5 py-5 border-b border-[#e5e7eb]">
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#01509d] to-[#140759] flex items-center justify-center mb-3">
-                                    <span className="text-white font-bold text-lg">A</span>
+                                    <span className="text-white font-bold text-lg">{profInitial}</span>
                                 </div>
-                                <p className="font-['Inter'] font-bold text-sm text-[#140759]">Académie des Dresseurs</p>
-                                <p className="text-xs text-[#808896]">Professeur vérifié</p>
+                                <p className="font-['Inter'] font-bold text-sm text-[#140759]">{profName}</p>
+                                <p className="text-xs text-[#808896]">{isVerified ? 'Professeur vérifié' : 'Professeur'}</p>
                             </div>
                             <nav className="py-2">
                                 {TABS.map(({ id, label, icon: Icon }) => (

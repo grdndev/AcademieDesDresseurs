@@ -1,39 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import CourseCard from "../../components/CourseCard";
 import Pagination from "../../components/ui/Pagination";
 import { Search, ChevronDown } from "lucide-react";
+import { apiGet } from "../../lib/apiClient";
 
-const COURS = [
-  { image: "/res/course1.png", date: "22 Jan 2024", level: "Avancé",        title: "Préparation tournoi régional",           authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "4h00", price: 49,  href: "/apprendre/1" },
-  { image: "/res/course2.png", date: "15 Jan 2024", level: "Intermédiaire", title: "Maîtriser le deck Miraidon ex",          authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h30", price: 29,  href: "/apprendre/2" },
-  { image: "/res/course3.png", date: "10 Jan 2024", level: "Débutant",      title: "Les bases du JCC Pokémon",               authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h30", price: 19,  href: "/apprendre/3" },
-  { image: "/res/course1.png", date: "5 Jan 2024",  level: "Avancé",        title: "Analyse méta Régionaux de Lyon",         authorName: "Tonio",           authorRole: "Champion Régional", duration: "3h15", price: 39,  href: "/apprendre/4" },
-  { image: "/res/course2.png", date: "1 Jan 2024",  level: "Intermédiaire", title: "Gestion des ressources en tournoi",      authorName: "Sarah K.",        authorRole: "Coach certifiée",   duration: "2h00", price: 24,  href: "/apprendre/5" },
-  { image: "/res/course3.png", date: "28 Déc 2023", level: "Débutant",      title: "Construire son premier deck compétitif", authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h45", price: 19,  href: "/apprendre/6" },
-  { image: "/res/course1.png", date: "20 Déc 2023", level: "Avancé",        title: "Live coaching — Lugia VSTAR",            authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "2h00", price: 35,  href: "/apprendre/7" },
-  { image: "/res/course2.png", date: "15 Déc 2023", level: "Intermédiaire", title: "Draft et Sealed : survivre au chaos",    authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "3h00", price: 29,  href: "/apprendre/8" },
-  { image: "/res/course3.png", date: "10 Déc 2023", level: "Débutant",      title: "Économie et budget en TCG",              authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "1h00", price: 15,  href: "/apprendre/9" },
-];
+type Cours = { id: string; image: string; date: string; level: string; title: string; authorName: string; authorRole: string; duration: string; price: number; href: string; };
 
 const LEVELS = ["Tous les niveaux", "Débutant", "Intermédiaire", "Avancé"];
 const PER_PAGE = 6;
 
 export default function CoursPage() {
-  const [search, setSearch] = useState("");
-  const [level, setLevel]   = useState("Tous les niveaux");
-  const [page, setPage]     = useState(1);
+  const [cours, setCours]     = useState<Cours[]>([]);
+  const [search, setSearch]   = useState("");
+  const [level, setLevel]     = useState("Tous les niveaux");
+  const [page, setPage]       = useState(1);
+
+  useEffect(() => {
+    apiGet<Cours[]>("/courses?format=LIVE").then(setCours).catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return COURS.filter((c) => {
+    return cours.filter((c) => {
       const matchSearch = !q || c.title.toLowerCase().includes(q) || c.authorName.toLowerCase().includes(q);
       const matchLevel  = level === "Tous les niveaux" || c.level === level;
       return matchSearch && matchLevel;
     });
-  }, [search, level]);
+  }, [cours, search, level]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -43,7 +39,7 @@ export default function CoursPage() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
-      <Navbar /> 
+      <Navbar />
 
       <main className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-10">
 
@@ -74,7 +70,7 @@ export default function CoursPage() {
         {/* Grille */}
         {paginated.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {paginated.map((c) => <CourseCard key={c.href} {...c} />)}
+            {paginated.map(({ id, ...props }) => <CourseCard key={id} {...props} />)}
           </div>
         ) : (
           <div className="text-center py-20 text-[#808896]">Aucun cours trouvé.</div>

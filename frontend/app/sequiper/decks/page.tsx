@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import Pagination from "../../components/ui/Pagination";
 import Badge from "../../components/ui/Badge";
@@ -8,17 +8,9 @@ import Button from "../../components/ui/Button";
 import Link from "next/link";
 import { Search, ChevronDown, ShoppingCart } from "lucide-react";
 import { useCart } from "../../context/cart-provider";
+import { apiGet } from "../../lib/apiClient";
 
-const DECKS = [
-  { id: "d1", name: "Lugia VSTAR Combo",     image: "/res/course1.png", badges: ["Méta", "Standard"], format: "Standard", level: "Avancé",        price: 29, stock: 5 },
-  { id: "d2", name: "Miraidon ex Turbo",     image: "/res/course2.png", badges: ["Méta", "Standard"], format: "Standard", level: "Intermédiaire", price: 29, stock: 3 },
-  { id: "d3", name: "Charizard ex Control", image: "/res/course3.png", badges: ["Standard"],          format: "Standard", level: "Avancé",        price: 34, stock: 2 },
-  { id: "d4", name: "Gardevoir ex Budget",  image: "/res/course1.png", badges: ["Courant"],           format: "Standard", level: "Débutant",      price: 19, stock: 8 },
-  { id: "d5", name: "Iron Hands ex",        image: "/res/course2.png", badges: ["Méta", "Standard"], format: "Standard", level: "Avancé",        price: 39, stock: 1 },
-  { id: "d6", name: "Chien-Pao ex Baxcalibur", image: "/res/course3.png", badges: ["Standard"],      format: "Standard", level: "Intermédiaire", price: 32, stock: 4 },
-  { id: "d7", name: "Lost Zone Box",        image: "/res/course1.png", badges: ["Standard"],          format: "Standard", level: "Avancé",        price: 35, stock: 3 },
-  { id: "d8", name: "Arceus VSTAR Budget",  image: "/res/course2.png", badges: ["Courant"],           format: "Standard", level: "Débutant",      price: 22, stock: 6 },
-];
+type Deck = { id: string; name: string; description?: string; image: string; badges: string[]; format: string; level: string; price: number; stock: number; slug?: string };
 
 const FORMATS = ["Tous les formats", "Standard", "Expanded"];
 const LEVELS  = ["Tous les niveaux", "Débutant", "Intermédiaire", "Avancé"];
@@ -26,20 +18,25 @@ const PER_PAGE = 6;
 
 export default function DecksPage() {
   const { dispatch } = useCart();
+  const [decks, setDecks]     = useState<Deck[]>([]);
   const [search, setSearch]   = useState("");
   const [format, setFormat]   = useState("Tous les formats");
   const [level, setLevel]     = useState("Tous les niveaux");
   const [page, setPage]       = useState(1);
 
+  useEffect(() => {
+    apiGet<Deck[]>("/products?type=DECK").then(setDecks).catch(() => {});
+  }, []);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return DECKS.filter((d) => {
+    return decks.filter((d) => {
       const matchSearch = !q || d.name.toLowerCase().includes(q);
       const matchFormat = format === "Tous les formats" || d.format === format;
       const matchLevel  = level  === "Tous les niveaux"  || d.level === level;
       return matchSearch && matchFormat && matchLevel;
     });
-  }, [search, format, level]);
+  }, [decks, search, format, level]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -48,7 +45,7 @@ export default function DecksPage() {
   function handleFormat(v: string) { setFormat(v);  setPage(1); }
   function handleLevel(v: string)  { setLevel(v);   setPage(1); }
 
-  function addToCart(d: typeof DECKS[0]) {
+  function addToCart(d: Deck) {
     dispatch({ type: "ADD_ITEM", payload: { _id: d.id, nameFR: d.name, price: d.price, quantity: 1, stock: d.stock, itemType: "accessory" } });
   }
 
@@ -62,9 +59,9 @@ export default function DecksPage() {
         <div className="relative rounded-2xl overflow-hidden mb-10 bg-gradient-to-r from-[#274c78] to-[#01509d] p-8 flex items-center justify-between">
           <div className="relative z-10 max-w-sm">
             <span className="text-xs font-bold text-[#dbb42b] uppercase tracking-wider mb-2 block">Deck méta du moment</span>
-            <h2 className="font-['Poppins'] font-bold text-2xl text-white mb-2">Lugia VSTAR Combo</h2>
-            <p className="text-sm text-white/70 mb-5">Le deck le plus redouté des Régionaux. Puissance offensive et setup ultra-rapide dès le tour 2.</p>
-            <Button variant="yellow" href="/sequiper/decks/d1">Voir le deck</Button>
+            <h2 className="font-['Poppins'] font-bold text-2xl text-white mb-2">{decks[0]?.name ?? 'Deck compétitif'}</h2>
+            <p className="text-sm text-white/70 mb-5">{decks[0]?.description ?? 'Découvrez les meilleurs decks de la meta actuelle.'}</p>
+            <Button variant="yellow" href={`/sequiper/decks/${decks[0]?.id ?? ''}`}>Voir le deck</Button>
           </div>
           <div className="hidden lg:flex gap-3 opacity-80">
             <img src="/res/course1.png" alt="" className="w-28 h-36 object-cover rounded-xl rotate-[-6deg] shadow-xl" />

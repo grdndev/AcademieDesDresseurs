@@ -36,9 +36,18 @@ export default function LoginPage() {
             localStorage.setItem("user", JSON.stringify(data.user))
 
             const role = data.user.role
-            if (["ADMIN", "SUPER_ADMIN"].includes(role)) {
+            const mockRole = ["ADMIN", "SUPER_ADMIN"].includes(role) ? "admin"
+                : role === "PROFESSOR" ? "professeur"
+                : "joueur"
+            localStorage.setItem("mock_user", JSON.stringify({
+                name: data.user.pseudo ?? data.user.firstName ?? data.user.email.split("@")[0],
+                email: data.user.email,
+                role: mockRole,
+            }))
+
+            if (mockRole === "admin") {
                 router.push("/admin")
-            } else if (role === "PROFESSOR") {
+            } else if (mockRole === "professeur") {
                 router.push("/espace-professeur")
             } else {
                 router.push("/espace-joueur")

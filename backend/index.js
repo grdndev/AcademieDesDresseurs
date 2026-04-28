@@ -10,8 +10,12 @@ const { sanitizeInputs, enforceLengths }     = require('./middleware/sanitize');
 const { apiLimiter }                         = require('./middleware/rateLimiter');
 const { logger }                             = require('./services/logger');
 
-const authRoutes = require('./routes/auth');
-const gdprRoutes = require('./routes/gdpr');
+const authRoutes     = require('./routes/auth');
+const gdprRoutes     = require('./routes/gdpr');
+const productsRoutes = require('./routes/products');
+const coursesRoutes  = require('./routes/courses');
+const usersRoutes    = require('./routes/users');
+const adminRoutes    = require('./routes/admin');
 
 const app = express();
 
@@ -71,16 +75,12 @@ app.use((req, res, next) => {
 
 // ─── ROUTES ───────────────────────────────────────────────────────────────────
 
-app.use('/api/auth', authRoutes);
-app.use('/api/gdpr', gdprRoutes);
-
-// TODO: migrer vers Prisma
-// app.use('/api/users',       require('./routes/users'));
-// app.use('/api/cards',       require('./routes/cards'));
-// app.use('/api/decks',       require('./routes/decks'));
-// app.use('/api/accessories', require('./routes/accessories'));
-// app.use('/api/orders',      require('./routes/orders'));
-// app.use('/api/payment',     require('./routes/payment'));
+app.use('/api/auth',     authRoutes);
+app.use('/api/gdpr',     gdprRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/courses',  coursesRoutes);
+app.use('/api/users',    usersRoutes);
+app.use('/api/admin',    adminRoutes);
 
 // ─── HEALTH ───────────────────────────────────────────────────────────────────
 

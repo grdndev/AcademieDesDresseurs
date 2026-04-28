@@ -1,41 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import Pagination from "../../components/ui/Pagination";
 import Button from "../../components/ui/Button";
 import { Search, ChevronDown, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "../../context/cart-provider";
+import { apiGet } from "../../lib/apiClient";
 
-const PRODUITS = [
-  { id: "a1", name: "Ultra Pro Deck Box",           category: "Rangement",   price: 9.99,  stock: 15, rating: 4.7, image: "/res/course1.png" },
-  { id: "a2", name: "Dragon Shield Sleeves x100",   category: "Protèges",    price: 12.99, stock: 8,  rating: 4.9, image: "/res/course2.png" },
-  { id: "a3", name: "Playmat Officiel Pokémon",     category: "Playmat",     price: 24.99, stock: 5,  rating: 4.8, image: "/res/course3.png" },
-  { id: "a4", name: "Dé à 6 faces Pokémon (x5)",   category: "Accessoires", price: 4.99,  stock: 20, rating: 4.5, image: "/res/course1.png" },
-  { id: "a5", name: "KMC Perfect Sleeves x80",      category: "Protèges",    price: 8.99,  stock: 12, rating: 4.8, image: "/res/course2.png" },
-  { id: "a6", name: "Classeur 9 pochettes 360p",   category: "Rangement",   price: 19.99, stock: 7,  rating: 4.6, image: "/res/course3.png" },
-  { id: "a7", name: "Tapis de jeu bleu compétitif", category: "Playmat",     price: 29.99, stock: 3,  rating: 4.9, image: "/res/course1.png" },
-  { id: "a8", name: "Compteur de dégâts Pokémon",   category: "Accessoires", price: 6.99,  stock: 18, rating: 4.4, image: "/res/course2.png" },
-  { id: "a9", name: "Boîte de rangement 1600c",     category: "Rangement",   price: 14.99, stock: 9,  rating: 4.7, image: "/res/course3.png" },
-];
+type Produit = { id: string; name: string; image: string; category: string; price: number; stock: number; rating: number; slug?: string };
 
 const CATEGORIES = ["Toutes", "Rangement", "Protèges", "Playmat", "Accessoires"];
 const PER_PAGE = 6;
 
 export default function AccessoiresPage() {
   const { dispatch } = useCart();
-  const [search, setSearch]     = useState("");
-  const [category, setCategory] = useState("Toutes");
-  const [page, setPage]         = useState(1);
+  const [produits, setProduits]   = useState<Produit[]>([]);
+  const [search, setSearch]       = useState("");
+  const [category, setCategory]   = useState("Toutes");
+  const [page, setPage]           = useState(1);
+
+  useEffect(() => {
+    apiGet<Produit[]>("/products?type=ACCESSORY").then(setProduits).catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return PRODUITS.filter((p) => {
+    return produits.filter((p) => {
       const matchSearch   = !q || p.name.toLowerCase().includes(q);
       const matchCategory = category === "Toutes" || p.category === category;
       return matchSearch && matchCategory;
     });
-  }, [search, category]);
+  }, [produits, search, category]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -43,7 +39,7 @@ export default function AccessoiresPage() {
   function handleFilter(val: string) { setCategory(val); setPage(1); }
   function handleSearch(val: string) { setSearch(val);   setPage(1); }
 
-  function addToCart(p: typeof PRODUITS[0]) {
+  function addToCart(p: Produit) {
     dispatch({ type: "ADD_ITEM", payload: { _id: p.id, nameFR: p.name, price: p.price, quantity: 1, stock: p.stock, itemType: "accessory" } });
   }
 
@@ -99,7 +95,7 @@ export default function AccessoiresPage() {
                   <h3 className="font-['Inter'] font-bold text-sm text-[#140759] mt-2 mb-1">{p.name}</h3>
                   <div className="flex items-center gap-1 mb-3">
                     <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs text-[#808896]">{p.rating}</span>
+                    <span className="text-xs text-[#808896]">{p.rating > 0 ? p.rating.toFixed(1) : '—'}</span>
                     <span className={`ml-auto text-xs font-medium ${p.stock > 0 ? "text-green-600" : "text-red-500"}`}>
                       {p.stock > 0 ? `${p.stock} en stock` : "Rupture"}
                     </span>
