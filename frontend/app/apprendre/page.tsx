@@ -20,9 +20,9 @@ const COURS_A_REVOIR = [
 ];
 
 const GUIDES = [
-  { gradientIndex: 0, level: "Débutant",      title: "Les Fondamentaux du Pokémon TCG",  description: "Apprenez les bases et commencez votre aventure compétitive.", authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "2h",   rating: 4.8, views: 234, price: 29, href: "/apprendre/guide-1" },
-  { gradientIndex: 1, level: "Avancé",        title: "Psychologie du Joueur Compétitif", description: "Maîtrisez l'aspect mental de la compétition.",                authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "3h",   rating: 4.9, views: 187, price: 59, href: "/apprendre/guide-2" },
-  { gradientIndex: 2, level: "Intermédiaire", title: "Gestion de Ressources Avancée",    description: "Optimisez chaque carte et chaque action.",                    authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h30", rating: 4.7, views: 142, price: 45, href: "/apprendre/guide-3" },
+  { gradientIndex: 0, level: "Débutant",      title: "Les Fondamentaux du Pokémon TCG",  description: "Apprenez les bases et commencez votre aventure compétitive.", authorName: "Prof. M. Dubois", authorRole: "Professeur validé", duration: "2h",   rating: 4.8, views: 234, price: 29, href: "/apprendre/guides/guide-1" },
+  { gradientIndex: 1, level: "Avancé",        title: "Psychologie du Joueur Compétitif", description: "Maîtrisez l'aspect mental de la compétition.",                authorName: "Thomas Moreau",   authorRole: "Coach compétitif",  duration: "3h",   rating: 4.9, views: 187, price: 59, href: "/apprendre/guides/guide-2" },
+  { gradientIndex: 2, level: "Intermédiaire", title: "Gestion de Ressources Avancée",    description: "Optimisez chaque carte et chaque action.",                    authorName: "Lucas Bernard",   authorRole: "Joueur Top 16",     duration: "2h30", rating: 4.7, views: 142, price: 45, href: "/apprendre/guides/guide-3" },
 ];
 
 const LEVELS    = ["Tous", "Débutant", "Intermédiaire", "Avancé"];

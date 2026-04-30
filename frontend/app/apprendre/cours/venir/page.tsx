@@ -65,14 +65,12 @@ export default function CoursAVenirPage() {
             <main className="max-w-[1280px] mx-auto px-6 lg:px-[100px] py-8">
 
                 {/* Filter bar */}
-                <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm px-5 py-4 flex flex-col gap-3 mb-8">
-                    <div className="flex items-center gap-3">
-                        <Search className="w-4 h-4 text-[#9ca3af] flex-shrink-0" />
-                        <input type="text" value={search} onChange={e => { setSearch(e.target.value); resetPage(); }}
-                            placeholder="Rechercher un cours ou un professeur…"
-                            className="flex-1 text-sm bg-transparent outline-none placeholder:text-[#9ca3af] text-[#140759]" />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="bg-white rounded-2xl border border-[#e5e7eb] shadow-sm px-5 py-3 flex items-center gap-3 mb-8 flex-wrap">
+                    <Search className="w-4 h-4 text-[#9ca3af] flex-shrink-0" />
+                    <input type="text" value={search} onChange={e => { setSearch(e.target.value); resetPage(); }}
+                        placeholder="Rechercher un cours ou un professeur…"
+                        className="flex-1 min-w-[160px] text-sm bg-transparent outline-none placeholder:text-[#9ca3af] text-[#140759]" />
+                    <div className="flex items-center gap-2 flex-wrap">
                         {[
                             { label: "Niveau",     opts: LEVELS,    val: level,  set: setLevel  },
                             { label: "Professeur", opts: PROFS,     val: prof,   set: setProf   },
@@ -87,7 +85,7 @@ export default function CoursAVenirPage() {
                                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#808896] pointer-events-none" />
                             </div>
                         ))}
-                        <div className="ml-auto relative">
+                        <div className="relative">
                             <select value={sort} onChange={e => { setSort(e.target.value); resetPage(); }}
                                 className="appearance-none h-8 pl-3 pr-7 text-xs font-medium text-[#140759] border border-[#e5e7eb] rounded-xl bg-white cursor-pointer outline-none focus:border-[#01509d]">
                                 {SORTS.map(s => <option key={s}>{s}</option>)}

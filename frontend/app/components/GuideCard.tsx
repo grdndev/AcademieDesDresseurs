@@ -33,7 +33,7 @@ interface Props {
 export default function GuideCard({
     image, gradientIndex = 0, level, title, description,
     authorAvatar, authorName, authorRole,
-    duration, rating, views, price, href, ctaLabel = "Lire le guide",
+    duration, rating, views, price, href, ctaLabel = "Lire le guide ->",
 }: Props) {
     return (
         <div className="bg-white rounded-2xl overflow-hidden border border-[#e5e7eb] shadow-sm hover:shadow-md transition-shadow flex flex-col">
@@ -87,7 +87,7 @@ export default function GuideCard({
                 {/* Price + CTA */}
                 <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
                     <span className="font-['Poppins'] font-bold text-[#140759] text-lg">{price}€</span>
-                    <Button variant="green" size="sm" href={href}>{ctaLabel}</Button>
+                    <Button variant="ghost" size="sm" href={href}>{ctaLabel}</Button>
                 </div>
             </div>
         </div>

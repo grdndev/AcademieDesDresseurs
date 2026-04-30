@@ -115,17 +115,26 @@ export default function CourseDetailPage({ params }: { params: { courseId: strin
                             </div>
                         </div>
 
-                        {/* Prérequis */}
+                        {/* À qui s'adresse ce cours */}
                         <div className="bg-white rounded-2xl p-6 border border-[#e5e7eb]">
-                            <h2 className="font-['Inter'] font-bold text-lg text-[#140759] mb-4">Ce qu'il te faut avant ce cours ?</h2>
-                            <ul className="space-y-2">
-                                {COURSE.prerequisites.map((req) => (
-                                    <li key={req} className="flex items-start gap-2">
-                                        <AlertCircle className="w-4 h-4 text-[#01509d] mt-0.5 flex-shrink-0" />
-                                        <span className="text-sm text-[#4b5563]">{req}</span>
-                                    </li>
+                            <h2 className="font-['Inter'] font-bold text-lg text-[#140759] mb-5">À qui s&apos;adresse ce cours ?</h2>
+                            <div className="grid sm:grid-cols-3 gap-4">
+                                {[
+                                    { icon: "🎓", title: "Joueurs intermédiaires", desc: "Vous connaissez les bases et voulez progresser vers la compétition" },
+                                    { icon: "⭐", title: "Joueurs avancés",        desc: "Vous cherchez à affiner votre stratégie et dominer le méta" },
+                                    { icon: "🏅", title: "Compétiteurs",           desc: "Vous participez à des tournois et visez le top niveau" },
+                                ].map(({ icon, title, desc }) => (
+                                    <div key={title} className="bg-[#f0f5fb] rounded-2xl p-5 flex flex-col gap-3 border border-[#e3ecf8]">
+                                        <div className="w-10 h-10 bg-[#dbeafe] rounded-xl flex items-center justify-center text-xl">
+                                            {icon}
+                                        </div>
+                                        <div>
+                                            <p className="font-['Inter'] font-bold text-sm text-[#140759] mb-1">{title}</p>
+                                            <p className="text-xs text-[#4b5563] leading-relaxed">{desc}</p>
+                                        </div>
+                                    </div>
                                 ))}
-                            </ul>
+                            </div>
                         </div>
 
                         {/* Déroulement de la session */}

@@ -206,9 +206,8 @@ const pageTitles: { [key: string]: PageInfo } = {
         breadcrumb: ["Accueil", "Progresser", "Tournois"],
     },
     "/progresser": {
-        title: "Coaching personnalisé et accompagnement compétitif",
-        subtitle: "Atteignez vos objectifs avec les meilleurs entraîneurs.",
-        breadcrumb: ["Accueil", "Progresser"],
+        title: "Apprendre le Pokémon TCG, étape par étape",
+        subtitle: "Coaching personnalisé et accompagnement compétitif pour dominer les tournois.",
         ctas: [
             { label: "Réserver un coaching", href: "/progresser/coaching", variant: "yellow" },
             { label: "Découvrir les ateliers", href: "/progresser/ateliers", variant: "blue" },
@@ -235,9 +234,8 @@ const pageTitles: { [key: string]: PageInfo } = {
         breadcrumb: ["Accueil", "Apprendre", "Guides"],
     },
     "/sequiper": {
-        title: "S'équiper",
-        subtitle: "Trouvez les meilleures cartes, decks et accessoires.",
-        breadcrumb: ["Accueil", "S'équiper"],
+        title: "Équipez-vous pour performer.",
+        subtitle: "Decks optimisés, cartes à l'unité, accessoires officiels.",
     },
     "/professeur/avantages": {
         title: "Avantages Professeur",
